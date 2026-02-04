@@ -1,0 +1,599 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Account Settings - SIRMS</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            overflow-x: hidden;
+            position: relative;
+        }
+        
+        /* Animated Background */
+        body::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: 
+                radial-gradient(circle at 20% 80%, rgba(120, 119, 198, 0.3) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(255, 119, 198, 0.3) 0%, transparent 50%),
+                radial-gradient(circle at 40% 40%, rgba(120, 219, 255, 0.3) 0%, transparent 50%);
+            animation: backgroundShift 20s ease-in-out infinite;
+        }
+        
+        @keyframes backgroundShift {
+            0%, 100% { transform: translateX(0) translateY(0); }
+            25% { transform: translateX(-20px) translateY(-20px); }
+            50% { transform: translateX(20px) translateY(-10px); }
+            75% { transform: translateX(-10px) translateY(20px); }
+        }
+        
+        .container {
+            position: relative;
+            z-index: 1;
+            padding: 40px 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        /* Close Button */
+        .close-button {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            color: white;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            font-size: 24px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+            z-index: 10;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .close-button:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: scale(1.1);
+        }
+        
+        /* Premium Header */
+        .premium-header {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 24px;
+            padding: 40px;
+            margin-bottom: 30px;
+            box-shadow: 
+                0 8px 32px rgba(0, 0, 0, 0.1),
+                inset 0 1px 0 rgba(255, 255, 255, 0.2);
+            animation: fadeInUp 0.8s ease-out;
+        }
+        
+        .profile-section {
+            display: flex;
+            align-items: center;
+            gap: 30px;
+        }
+        
+        .premium-avatar {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 48px;
+            font-weight: 800;
+            color: white;
+            box-shadow: 
+                0 20px 40px rgba(0, 0, 0, 0.2),
+                0 0 0 4px rgba(255, 255, 255, 0.1);
+            transition: all 0.4s ease;
+        }
+        
+        .premium-avatar:hover {
+            transform: scale(1.05);
+            box-shadow: 
+                0 25px 50px rgba(0, 0, 0, 0.3),
+                0 0 0 4px rgba(255, 255, 255, 0.2);
+        }
+        
+        .profile-info h1 {
+            margin: 0;
+            font-size: 42px;
+            font-weight: 800;
+            color: white;
+            text-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+            background: linear-gradient(135deg, #ffffff 0%, #f0f0f0 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .profile-info p {
+            margin: 12px 0 0 0;
+            font-size: 18px;
+            color: rgba(255, 255, 255, 0.8);
+            font-weight: 500;
+        }
+        
+        /* Content Grid */
+        .premium-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 30px;
+        }
+        
+        /* Premium Cards */
+        .premium-card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 24px;
+            overflow: hidden;
+            margin-bottom: 25px;
+            transition: all 0.4s ease;
+            box-shadow: 
+                0 8px 32px rgba(0, 0, 0, 0.1),
+                inset 0 1px 0 rgba(255, 255, 255, 0.2);
+            animation: fadeInUp 0.8s ease-out;
+        }
+        
+        .premium-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 
+                0 20px 60px rgba(0, 0, 0, 0.2),
+                inset 0 1px 0 rgba(255, 255, 255, 0.3);
+        }
+        
+        .card-header {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 25px 30px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .card-header i {
+            color: white;
+            font-size: 24px;
+            padding: 12px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+        
+        .card-header h3 {
+            margin: 0;
+            font-size: 22px;
+            font-weight: 800;
+            color: white;
+        }
+        
+        .card-body {
+            padding: 30px;
+        }
+        
+        /* Form Styles */
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 25px;
+            margin-bottom: 25px;
+        }
+        
+        .form-group {
+            margin-bottom: 25px;
+        }
+        
+        .form-label {
+            display: block;
+            font-size: 14px;
+            font-weight: 700;
+            color: white;
+            margin-bottom: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            opacity: 0.9;
+        }
+        
+        .premium-input {
+            width: 100%;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            border-radius: 16px;
+            padding: 18px 24px;
+            font-size: 16px;
+            font-weight: 500;
+            color: white;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+            box-sizing: border-box;
+        }
+        
+        .premium-input::placeholder {
+            color: rgba(255, 255, 255, 0.5);
+        }
+        
+        .premium-input:focus {
+            outline: none;
+            border-color: rgba(255, 255, 255, 0.5);
+            background: rgba(255, 255, 255, 0.15);
+            box-shadow: 
+                0 0 0 4px rgba(255, 255, 255, 0.1),
+                0 8px 32px rgba(0, 0, 0, 0.2);
+            transform: translateY(-2px);
+        }
+        
+        /* Premium Buttons */
+        .btn-premium {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 16px;
+            padding: 20px 32px;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            width: 100%;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            box-shadow: 
+                0 8px 24px rgba(102, 126, 234, 0.3),
+                inset 0 1px 0 rgba(255, 255, 255, 0.2);
+        }
+        
+        .btn-premium:hover {
+            transform: translateY(-3px);
+            box-shadow: 
+                0 12px 36px rgba(102, 126, 234, 0.4),
+                inset 0 1px 0 rgba(255, 255, 255, 0.3);
+        }
+        
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 16px;
+            padding: 18px 32px;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            width: 100%;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            backdrop-filter: blur(10px);
+        }
+        
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.2);
+            border-color: rgba(255, 255, 255, 0.5);
+            transform: translateY(-3px);
+        }
+        
+        /* Info Items */
+        .info-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .info-item:last-child {
+            border-bottom: none;
+        }
+        
+        .info-label {
+            font-weight: 700;
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .info-value {
+            font-weight: 600;
+            color: white;
+            font-size: 15px;
+        }
+        
+        /* Badges */
+        .badge {
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .badge-premium {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+        }
+        
+        .badge-success {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+        }
+        
+        .badge-warning {
+            background: linear-gradient(135deg, #ffc107 0%, #ff8f00 100%);
+            color: white;
+        }
+        
+        /* Animations */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(40px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            .premium-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+            
+            .profile-section {
+                flex-direction: column;
+                text-align: center;
+            }
+            
+            .premium-avatar {
+                width: 100px;
+                height: 100px;
+                font-size: 36px;
+            }
+            
+            .profile-info h1 {
+                font-size: 28px;
+            }
+        }
+        
+        /* Messages */
+        .messages {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+        }
+        
+        .alert {
+            padding: 15px 20px;
+            border-radius: 12px;
+            margin-bottom: 10px;
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            font-weight: 600;
+        }
+        
+        .alert-success {
+            backgro>ody>
+</html</b>
+/script <});
+                 });
+
+               }   
+       }             e;
+    n fals   retur           
+          s long!'); 8 characterat leastust be ssword mert('Pa        al                ault();
+reventDef         e.p        ) {
+       th < 8Pass1.lengif (new             
+                 
+           }        
+           turn false;        re           ');
+      not match!ords dot('New passwaler                     ult();
+   faeventDee.pr                  ) {
+      ass2!== newP1  if (newPass                      
+               ue;
+  [2].valdFields passworss2 =onst newPa c          ;
+         .valueields[1]= passwordF newPass1     const             
+   h === 3) {ngtdFields.leswor(pas       if 
+         ');d"]sswort[type="paorAll('inpurySelect= form.quedFields onst passwor       c         e) {
+on(, functi'submit'er(entListenm.addEv     for     orm => {
+  h(fEacform').forrAll('Selectot.querymen     docun
+   m validatiod for     // Ad    
+   
+     5000);     },    }
+   ;
+        move(), 300) messages.re=>imeout(()    setT          0%)';
+   ateX(10 = 'transle.transformes.stylssag  me             ty = '0';
+ le.opacityes.s messag         s) {
+       if (message           ');
+'.messagesctor(ySeleuerdocument.qmessages = onst       c     ) {
+ unction((fmeoutetTi  s
+      condsfter 5 se messages ato-hide      // Au  ript>
+sc <>
+
+   
+    </divdiv></  iv>
+        </d          /div>
+   <             iv>
+/d    <             %}
+    {% endif                     /div>
+            <         n>
+      i" }}</spad, Y H:e:"M datogin| user.last_l-value">{{s="infolasan c  <sp                          </span>
+ast Login">Lelnfo-lab"iclass= <span                         em">
+   s="info-it   <div clas                    _login %}
+ f user.last {% i                        </div>
+                 
+         </span>                 
+        f %}ive{% endielse %}Inact}Active{% e %_activ if user.is {%                             if %}">
+  nd{% ewarningdge-bass{% else %}}badge-succeis_active % user.{% ifs="badge  <span clas                           us</span>
+">Stat"info-labelpan class=  <s                          item">
+ass="info-    <div cl               v>
+          </di                  }</span>
+ splay }.get_role_di user>{{ge-premium"bads="badge n claspa       <s                    >
+ spanRole</fo-label">="in <span class                         item">
+  ss="info-iv cla <d                     /div>
+       <               n>
+    ame }}</spaser.userne">{{ uo-valuass="infan cl   <sp                 >
+        rname</spanabel">Useass="info-l  <span cl                    
+      o-item">"infs=las <div c                    dy">
+   -boss="cardiv cla         <d     div>
+       </                  
+ </h3>unt Summary <h3>Acco             
+          card"></i>fa-id-class="fas        <i             r">
+     rd-heade"cadiv class=    <                >
+"emium-cardpriv class="        <d        -->
+ aryccount Summ<!-- A              >
+      <div       -->
+  ebar-- Sid     <!
+
+       /div>   <    v>
+      </di       >
+         </div                </form>
+                        ton>
+    </but                           
+ges>Save Chan8px;"></i: gin-rightstyle="mar" fa-savelass="fas i c     <                        
+   ondary">ss="btn-sec" clabmittype="su  <button                 
+                                   /div>
+            <                   ss">
+il addre"Enter emaaceholder=" pltremium-inpu" class="p }}ser.email{ ulue="{"email" vaname=ail" pe="em   <input ty                         abel>
+    ss</lEmail Addreel">laborm- class="f<label                              ">
+  rm-groupclass="fo   <div                       
+                      
+         </div>                          /div>
+   <                               st name">
+laer="Enter laceholdut" pm-inp"premiuass=}}" clst_name lar.="{{ use valuest_name"" name="laext"te=input typ          <                      el>
+    Name</lab">Last -labelrm"fo class=label       <                             oup">
+="form-grv class         <di                       
+                             iv>
+        </d                       e">
+    er first nam"Entlaceholder=input" p"premium-}" class=first_name }="{{ user.e" value"first_nam" name=xtpe="tet tynpu   <i                               l>
+  /labeame<el">First Ns="form-lablaslabel c <                           ">
+        p"form-groulass=      <div c                         -row">
+ class="form       <div                  
+                               /div>
+       <                    
+  ername">nter uslder="E placehoinput"premium-" class="me }}.userna="{{ user valuername"se="u name="text"type    <input                         >
+    </label">Usernameellab="form- classel<lab                               
+ >oup"form-grclass="       <div                     
+                            file">
+ "prope" value=orm_tyme="fen" naiddype="hinput t         <                   _token %}
+csrf       {%             
+         >od="post"eth  <form m              >
+        ody"s="card-biv clas         <d           /div>
+           <
+         rmation</h3>nfol I<h3>Persona                       ></i>
+ s fa-user"class="fai         <                der">
+eass="card-h    <div cla           rd">
+     emium-ca class="pr   <div      
+       > --formationl In- Persona       <!-        
+ v>
+ </di        
+         </div>              form>
+      </                      button>
+ </                          ord
+ asswUpdate P"></i>t: 8px;argin-rightyle="mlt" sd-ael"fas fa-shiass= <i cl                              m">
+ -premius="btnubmit" clastype="sutton           <b             
+                            
+      </div>                        /div>
+    <                            d">
+   passworw nem your ="Confirholder" placetremium-inpu" class="p="8minlengthquired 2" rew_password name="nessword""pa<input type=                                  label>
+  sword</nfirm Pasabel">Co"form-llass=label c          <                       ">
+   m-grouporclass="f     <div                        
+                                     </div>
+                             ">
+  asswordng pstro a "Createplaceholder=nput" m-ipremiuass="h="8" cld minlengt require_password1"ame="neword" n="passwtype <input                                   l>
+ rd</labeNew Passworm-label">="foel class      <lab                            >
+  group"orm-s="f   <div clas                         >
+    ow""form-rlass=    <div c                 
+                                 
+        </div>                  ">
+     passwordentur curr="Enter yoder" placeholm-input="premiud classrequired" old_passworme="" napassword"put type=      <in                     l>
+     ssword</labe Parentbel">Curform-la class="    <label                          roup">
+  form-gclass="div           <           
+                            ">
+       "passwordvalue=ype" rm_t" name="foe="hidden  <input typ                      
+    _token %} csrf{%                        ">
+    "postod= meth    <form              ">
+      ard-bodylass="c   <div c               v>
+        </di              s</h3>
+tingrity Set <h3>Secu                     ></i>
+  ield-alt"as fa-shclass="f         <i               r">
+ d-heades="carclas      <div     
+          -card">iumem="pr <div class         
+      ettings --> Security S       <!--      <div>
+           t -->
+    in Conten  <!-- Ma        grid">
+  premium-lass="     <div c  
+
+      </div> </div>
+           v>
+      </di      /p>
+       es<y preferencurit and sectionormanfnt iaccoue your ag    <p>Man              
+  f %}</h1>% enditings" }}{ Setuntault:"Accoefull_name|dget_f{ user.{% else %}{le }}with_middll_name_fut_{ user.geddle %}{with_mi_full_name_etf user.g <h1>{% i         
+          ile-info">of class="pr      <div     
+           </div>      " }}
+    ault:"e.0|deft_namser.las" }}{{ u"U.0|default:nameuser.first_ {{                   tar">
+ m-avas="premiu <div clas         n">
+      ectiole-sfiss="pro<div cla      >
+      ium-header"premass=" cl    <div -->
+    mium Header  <!-- Pre>
+      iner"lass="conta
+    <div cton>
+    
+    </buts"></i>"fas fa-timeass=i cl        <board">
+n to DashRetur="le" tit/'dashboard'/tion.href=window.locack="tton" oncliclose-bus="on clas  <button -->
+  e Butt  <!-- Clos
+   endif %}
+    {%iv>
+
+    </dor %}  {% endf    
+      </div>   essage }}
+     {{ m      ">
+   }}gsssage.tat-{{ me"alert aler class=     <div
+   ges %}e in messa% for messag
+        {messages"> class="}
+    <divessages %   {% if m-->
+  Messages 
+    <!-->head>
+<body</style>
+</}
+           ;
+ .3) 68, 0239, 68,lor: rgba(order-co          b
+  68, 0.2);, (239, 68ground: rgba  back
+          ror {lert-er     .a    
+     }
+      3);
+    85, 129, 0.: rgba(16, 1orrder-col        bo  .2);
+  , 0185, 129, : rgba(16und

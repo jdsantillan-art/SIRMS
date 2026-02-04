@@ -1,0 +1,729 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Academic Structure Management - SIRMS{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 py-8">
+    <div class="mb-6">
+        <h1 class="text-4xl font-bold text-indigo-700 mb-2">📚 Academic Structure Management</h1>
+        <p class="text-gray-600">Manage curriculum, tracks, grades, and sections - Add and edit all academic structure components</p>
+    </div>
+
+    <!-- Tabs -->
+    <div class="bg-white rounded-lg shadow-md mb-6">
+        <div class="border-b border-gray-200">
+            <nav class="flex -mb-px">
+                <button onclick="showTab('curriculum')" class="tab-button active px-6 py-4 text-sm font-medium border-b-2 border-indigo-500 text-indigo-600">
+                    Curriculum
+                </button>
+                <button onclick="showTab('tracks')" class="tab-button px-6 py-4 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700">
+                    Tracks
+                </button>
+                <button onclick="showTab('grades')" class="tab-button px-6 py-4 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700">
+                    Grades
+                </button>
+                <button onclick="showTab('sections')" class="tab-button px-6 py-4 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700">
+                    Sections
+                </button>
+            </nav>
+        </div>
+
+        <!-- Curriculum Tab -->
+        <div id="curriculum-tab" class="tab-content p-6">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-xl font-bold">Curricula</h3>
+                <button onclick="openAddCurriculumModal()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg flex items-center space-x-2">
+                    <i class="fas fa-plus"></i>
+                    <span>Add Curriculum</span>
+                </button>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {% for curriculum in curricula %}
+                <div class="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
+                    <div class="flex justify-between items-start mb-2">
+                        <h4 class="font-bold text-lg">{{ curriculum.name }}</h4>
+                        <div class="flex space-x-2">
+                            <button onclick="openEditCurriculumModal({{ curriculum.id }}, '{{ curriculum.name|escapejs }}', '{{ curriculum.description|escapejs }}')" 
+                                    class="text-indigo-600 hover:text-indigo-800" title="Edit">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button onclick="deleteCurriculum({{ curriculum.id }}, '{{ curriculum.name|escapejs }}')" 
+                                    class="text-red-600 hover:text-red-800" title="Delete">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <p class="text-gray-600 text-sm mb-3">{{ curriculum.description|default:"No description" }}</p>
+                    <div class="flex justify-between text-sm text-gray-500">
+                        <span><i class="fas fa-layer-group"></i> {{ curriculum.tracks_count }} Tracks</span>
+                        <span><i class="fas fa-users"></i> {{ curriculum.students_count }} Students</span>
+                    </div>
+                </div>
+                {% empty %}
+                <p class="text-gray-500 col-span-full">No curricula found. Add one to get started.</p>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Tracks Tab -->
+        <div id="tracks-tab" class="tab-content p-6 hidden">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-xl font-bold">Tracks</h3>
+                <button onclick="openAddTrackModal()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg flex items-center space-x-2">
+                    <i class="fas fa-plus"></i>
+                    <span>Add Track</span>
+                </button>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Track Name</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Curriculum</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        {% for curriculum in curricula %}
+                            {% for track in curriculum.track_set.all %}
+                            <tr>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ track.name }}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ curriculum.name }}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm">
+                                    <button onclick="openEditTrackModal({{ track.id }}, '{{ track.name|escapejs }}', {{ curriculum.id }})" 
+                                            class="text-indigo-600 hover:text-indigo-800 mr-3" title="Edit">
+                                        <i class="fas fa-edit"></i> Edit
+                                    </button>
+                                    <button onclick="deleteTrack({{ track.id }}, '{{ track.name|escapejs }}')" 
+                                            class="text-red-600 hover:text-red-800" title="Delete">
+                                        <i class="fas fa-trash"></i> Delete
+                                    </button>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        {% empty %}
+                        <tr>
+                            <td colspan="3" class="px-6 py-4 text-center text-gray-500">No tracks found. Add one to get started.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Grades Tab -->
+        <div id="grades-tab" class="tab-content p-6 hidden">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-xl font-bold">Grades</h3>
+                <button onclick="openAddGradeModal()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg flex items-center space-x-2">
+                    <i class="fas fa-plus"></i>
+                    <span>Add Grade</span>
+                </button>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Grade Level</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Track</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Curriculum</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        {% for curriculum in curricula %}
+                            {% for track in curriculum.track_set.all %}
+                                {% for grade in track.grade_set.all %}
+                                <tr>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Grade {{ grade.level }}</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ track.name }}</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ curriculum.name }}</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm">
+                                        <button onclick="openEditGradeModal({{ grade.id }}, '{{ grade.level }}', {{ track.id }})" 
+                                                class="text-indigo-600 hover:text-indigo-800 mr-3" title="Edit">
+                                            <i class="fas fa-edit"></i> Edit
+                                        </button>
+                                        <button onclick="deleteGrade({{ grade.id }}, '{{ grade.level }}')" 
+                                                class="text-red-600 hover:text-red-800" title="Delete">
+                                            <i class="fas fa-trash"></i> Delete
+                                        </button>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            {% endfor %}
+                        {% empty %}
+                        <tr>
+                            <td colspan="4" class="px-6 py-4 text-center text-gray-500">No grades found. Add one to get started.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Sections Tab -->
+        <div id="sections-tab" class="tab-content p-6 hidden">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-xl font-bold">Sections</h3>
+                <button onclick="openAddSectionModal()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg flex items-center space-x-2">
+                    <i class="fas fa-plus"></i>
+                    <span>Add Section</span>
+                </button>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Section Name</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Grade</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Track</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Adviser</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        {% for curriculum in curricula %}
+                            {% for track in curriculum.track_set.all %}
+                                {% for grade in track.grade_set.all %}
+                                    {% for section in grade.section_set.all %}
+                                    <tr>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ section.name }}</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Grade {{ grade.level }}</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ track.name }}</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                            {% if section.adviser %}
+                                                {{ section.adviser.get_full_name }}
+                                            {% else %}
+                                                <span class="text-gray-400">No adviser</span>
+                                            {% endif %}
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm">
+                                            <button onclick="openEditSectionModal({{ section.id }}, '{{ section.name|escapejs }}', {{ grade.id }}, {% if section.adviser %}{{ section.adviser.id }}{% else %}null{% endif %})" 
+                                                    class="text-indigo-600 hover:text-indigo-800 mr-3" title="Edit">
+                                                <i class="fas fa-edit"></i> Edit
+                                            </button>
+                                            <button onclick="deleteSection({{ section.id }}, '{{ section.name|escapejs }}')" 
+                                                    class="text-red-600 hover:text-red-800" title="Delete">
+                                                <i class="fas fa-trash"></i> Delete
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                {% endfor %}
+                            {% endfor %}
+                        {% empty %}
+                        <tr>
+                            <td colspan="5" class="px-6 py-4 text-center text-gray-500">No sections found. Add one to get started.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add/Edit Curriculum Modal -->
+<div id="curriculumModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden z-50">
+    <div class="flex items-center justify-center min-h-screen p-4">
+        <div class="bg-white rounded-lg shadow-xl max-w-md w-full">
+            <div class="p-6">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-2xl font-bold text-gray-800" id="curriculumModalTitle">Add Curriculum</h3>
+                    <button onclick="closeCurriculumModal()" class="text-gray-400 hover:text-gray-600">
+                        <i class="fas fa-times text-2xl"></i>
+                    </button>
+                </div>
+                <form id="curriculumForm" onsubmit="submitCurriculum(event)">
+                    <input type="hidden" id="curriculumId" name="curriculum_id">
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Name *</label>
+                        <input type="text" id="curriculumName" name="name" required 
+                               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
+                    </div>
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                        <textarea id="curriculumDescription" name="description" rows="3"
+                                  class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"></textarea>
+                    </div>
+                    <div class="flex justify-end space-x-3 mt-6">
+                        <button type="button" onclick="closeCurriculumModal()" 
+                                class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">Cancel</button>
+                        <button type="submit" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">Save</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add/Edit Track Modal -->
+<div id="trackModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden z-50">
+    <div class="flex items-center justify-center min-h-screen p-4">
+        <div class="bg-white rounded-lg shadow-xl max-w-md w-full">
+            <div class="p-6">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-2xl font-bold text-gray-800" id="trackModalTitle">Add Track</h3>
+                    <button onclick="closeTrackModal()" class="text-gray-400 hover:text-gray-600">
+                        <i class="fas fa-times text-2xl"></i>
+                    </button>
+                </div>
+                <form id="trackForm" onsubmit="submitTrack(event)">
+                    <input type="hidden" id="trackId" name="track_id">
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Name *</label>
+                        <input type="text" id="trackName" name="name" required 
+                               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
+                    </div>
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Curriculum *</label>
+                        <select id="trackCurriculum" name="curriculum_id" required 
+                                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
+                            <option value="">Select Curriculum</option>
+                            {% for curriculum in curricula %}
+                            <option value="{{ curriculum.id }}">{{ curriculum.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="flex justify-end space-x-3 mt-6">
+                        <button type="button" onclick="closeTrackModal()" 
+                                class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">Cancel</button>
+                        <button type="submit" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">Save</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add/Edit Grade Modal -->
+<div id="gradeModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden z-50">
+    <div class="flex items-center justify-center min-h-screen p-4">
+        <div class="bg-white rounded-lg shadow-xl max-w-md w-full">
+            <div class="p-6">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-2xl font-bold text-gray-800" id="gradeModalTitle">Add Grade</h3>
+                    <button onclick="closeGradeModal()" class="text-gray-400 hover:text-gray-600">
+                        <i class="fas fa-times text-2xl"></i>
+                    </button>
+                </div>
+                <form id="gradeForm" onsubmit="submitGrade(event)">
+                    <input type="hidden" id="gradeId" name="grade_id">
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Level *</label>
+                        <input type="text" id="gradeLevel" name="level" required 
+                               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500" 
+                               placeholder="e.g., 7, 8, 9, 10, 11, 12">
+                    </div>
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Track *</label>
+                        <select id="gradeTrack" name="track_id" required 
+                                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
+                            <option value="">Select Track</option>
+                            {% for curriculum in curricula %}
+                                {% for track in curriculum.track_set.all %}
+                                <option value="{{ track.id }}" data-curriculum="{{ curriculum.id }}">{{ track.name }} ({{ curriculum.name }})</option>
+                                {% endfor %}
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="flex justify-end space-x-3 mt-6">
+                        <button type="button" onclick="closeGradeModal()" 
+                                class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">Cancel</button>
+                        <button type="submit" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">Save</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add/Edit Section Modal -->
+<div id="sectionModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden z-50">
+    <div class="flex items-center justify-center min-h-screen p-4">
+        <div class="bg-white rounded-lg shadow-xl max-w-md w-full">
+            <div class="p-6">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-2xl font-bold text-gray-800" id="sectionModalTitle">Add Section</h3>
+                    <button onclick="closeSectionModal()" class="text-gray-400 hover:text-gray-600">
+                        <i class="fas fa-times text-2xl"></i>
+                    </button>
+                </div>
+                <form id="sectionForm" onsubmit="submitSection(event)">
+                    <input type="hidden" id="sectionId" name="section_id">
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Name *</label>
+                        <input type="text" id="sectionName" name="name" required 
+                               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500" 
+                               placeholder="e.g., Section A, Section 1">
+                    </div>
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Grade *</label>
+                        <select id="sectionGrade" name="grade_id" required 
+                                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
+                            <option value="">Select Grade</option>
+                            {% for curriculum in curricula %}
+                                {% for track in curriculum.track_set.all %}
+                                    {% for grade in track.grade_set.all %}
+                                    <option value="{{ grade.id }}">Grade {{ grade.level }} - {{ track.name }} ({{ curriculum.name }})</option>
+                                    {% endfor %}
+                                {% endfor %}
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Adviser (Optional)</label>
+                        <select id="sectionAdviser" name="adviser_id" 
+                                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
+                            <option value="">No Adviser</option>
+                            {% for teacher in teachers %}
+                            <option value="{{ teacher.id }}">{{ teacher.get_full_name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="flex justify-end space-x-3 mt-6">
+                        <button type="button" onclick="closeSectionModal()" 
+                                class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">Cancel</button>
+                        <button type="submit" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">Save</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Tab Management
+function showTab(tabName) {
+    document.querySelectorAll('.tab-content').forEach(tab => tab.classList.add('hidden'));
+    document.querySelectorAll('.tab-button').forEach(btn => {
+        btn.classList.remove('active', 'border-indigo-500', 'text-indigo-600');
+        btn.classList.add('border-transparent', 'text-gray-500');
+    });
+    
+    document.getElementById(tabName + '-tab').classList.remove('hidden');
+    event.target.classList.add('active', 'border-indigo-500', 'text-indigo-600');
+    event.target.classList.remove('border-transparent', 'text-gray-500');
+}
+
+// Curriculum Modals
+function openAddCurriculumModal() {
+    document.getElementById('curriculumModalTitle').textContent = 'Add Curriculum';
+    document.getElementById('curriculumId').value = '';
+    document.getElementById('curriculumName').value = '';
+    document.getElementById('curriculumDescription').value = '';
+    document.getElementById('curriculumModal').classList.remove('hidden');
+}
+
+function openEditCurriculumModal(id, name, description) {
+    document.getElementById('curriculumModalTitle').textContent = 'Edit Curriculum';
+    document.getElementById('curriculumId').value = id;
+    document.getElementById('curriculumName').value = name;
+    document.getElementById('curriculumDescription').value = description || '';
+    document.getElementById('curriculumModal').classList.remove('hidden');
+}
+
+function closeCurriculumModal() {
+    document.getElementById('curriculumModal').classList.add('hidden');
+}
+
+async function submitCurriculum(event) {
+    event.preventDefault();
+    const form = event.target;
+    const formData = new FormData(form);
+    const curriculumId = document.getElementById('curriculumId').value;
+    
+    const url = curriculumId 
+        ? `{% url 'edit_curriculum' 0 %}`.replace('0', curriculumId)
+        : '{% url "add_curriculum" %}';
+    
+    try {
+        const response = await fetch(url, {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-CSRFToken': '{{ csrf_token }}'
+            }
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            alert(data.message);
+            location.reload();
+        } else {
+            alert('Error: ' + data.error);
+        }
+    } catch (error) {
+        alert('Error: ' + error.message);
+    }
+}
+
+// Track Modals
+function openAddTrackModal() {
+    document.getElementById('trackModalTitle').textContent = 'Add Track';
+    document.getElementById('trackId').value = '';
+    document.getElementById('trackName').value = '';
+    document.getElementById('trackCurriculum').value = '';
+    document.getElementById('trackModal').classList.remove('hidden');
+}
+
+function openEditTrackModal(id, name, curriculumId) {
+    document.getElementById('trackModalTitle').textContent = 'Edit Track';
+    document.getElementById('trackId').value = id;
+    document.getElementById('trackName').value = name;
+    document.getElementById('trackCurriculum').value = curriculumId;
+    document.getElementById('trackModal').classList.remove('hidden');
+}
+
+function closeTrackModal() {
+    document.getElementById('trackModal').classList.add('hidden');
+}
+
+async function submitTrack(event) {
+    event.preventDefault();
+    const form = event.target;
+    const formData = new FormData(form);
+    const trackId = document.getElementById('trackId').value;
+    
+    const url = trackId 
+        ? `{% url 'edit_track' 0 %}`.replace('0', trackId)
+        : '{% url "add_track" %}';
+    
+    try {
+        const response = await fetch(url, {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-CSRFToken': '{{ csrf_token }}'
+            }
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            alert(data.message);
+            location.reload();
+        } else {
+            alert('Error: ' + data.error);
+        }
+    } catch (error) {
+        alert('Error: ' + error.message);
+    }
+}
+
+// Grade Modals
+function openAddGradeModal() {
+    document.getElementById('gradeModalTitle').textContent = 'Add Grade';
+    document.getElementById('gradeId').value = '';
+    document.getElementById('gradeLevel').value = '';
+    document.getElementById('gradeTrack').value = '';
+    document.getElementById('gradeModal').classList.remove('hidden');
+}
+
+function openEditGradeModal(id, level, trackId) {
+    document.getElementById('gradeModalTitle').textContent = 'Edit Grade';
+    document.getElementById('gradeId').value = id;
+    document.getElementById('gradeLevel').value = level;
+    document.getElementById('gradeTrack').value = trackId;
+    document.getElementById('gradeModal').classList.remove('hidden');
+}
+
+function closeGradeModal() {
+    document.getElementById('gradeModal').classList.add('hidden');
+}
+
+async function submitGrade(event) {
+    event.preventDefault();
+    const form = event.target;
+    const formData = new FormData(form);
+    const gradeId = document.getElementById('gradeId').value;
+    
+    const url = gradeId 
+        ? `{% url 'edit_grade' 0 %}`.replace('0', gradeId)
+        : '{% url "add_grade" %}';
+    
+    try {
+        const response = await fetch(url, {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-CSRFToken': '{{ csrf_token }}'
+            }
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            alert(data.message);
+            location.reload();
+        } else {
+            alert('Error: ' + data.error);
+        }
+    } catch (error) {
+        alert('Error: ' + error.message);
+    }
+}
+
+// Section Modals
+function openAddSectionModal() {
+    document.getElementById('sectionModalTitle').textContent = 'Add Section';
+    document.getElementById('sectionId').value = '';
+    document.getElementById('sectionName').value = '';
+    document.getElementById('sectionGrade').value = '';
+    document.getElementById('sectionAdviser').value = '';
+    document.getElementById('sectionModal').classList.remove('hidden');
+}
+
+function openEditSectionModal(id, name, gradeId, adviserId) {
+    document.getElementById('sectionModalTitle').textContent = 'Edit Section';
+    document.getElementById('sectionId').value = id;
+    document.getElementById('sectionName').value = name;
+    document.getElementById('sectionGrade').value = gradeId;
+    document.getElementById('sectionAdviser').value = adviserId || '';
+    document.getElementById('sectionModal').classList.remove('hidden');
+}
+
+function closeSectionModal() {
+    document.getElementById('sectionModal').classList.add('hidden');
+}
+
+async function submitSection(event) {
+    event.preventDefault();
+    const form = event.target;
+    const formData = new FormData(form);
+    const sectionId = document.getElementById('sectionId').value;
+    
+    const url = sectionId 
+        ? `{% url 'edit_section' 0 %}`.replace('0', sectionId)
+        : '{% url "add_section" %}';
+    
+    try {
+        const response = await fetch(url, {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-CSRFToken': '{{ csrf_token }}'
+            }
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            alert(data.message);
+            location.reload();
+        } else {
+            alert('Error: ' + data.error);
+        }
+    } catch (error) {
+        alert('Error: ' + error.message);
+    }
+}
+
+// Delete Functions
+async function deleteCurriculum(id, name) {
+    if (!confirm(`Are you sure you want to delete curriculum "${name}"? This action cannot be undone.`)) {
+        return;
+    }
+    
+    try {
+        const response = await fetch(`{% url 'delete_curriculum' 0 %}`.replace('0', id), {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': '{{ csrf_token }}'
+            }
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            alert(data.message);
+            location.reload();
+        } else {
+            alert('Error: ' + data.error);
+        }
+    } catch (error) {
+        alert('Error: ' + error.message);
+    }
+}
+
+async function deleteTrack(id, name) {
+    if (!confirm(`Are you sure you want to delete track "${name}"? This action cannot be undone.`)) {
+        return;
+    }
+    
+    try {
+        const response = await fetch(`{% url 'delete_track' 0 %}`.replace('0', id), {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': '{{ csrf_token }}'
+            }
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            alert(data.message);
+            location.reload();
+        } else {
+            alert('Error: ' + data.error);
+        }
+    } catch (error) {
+        alert('Error: ' + error.message);
+    }
+}
+
+async function deleteGrade(id, level) {
+    if (!confirm(`Are you sure you want to delete Grade ${level}? This action cannot be undone.`)) {
+        return;
+    }
+    
+    try {
+        const response = await fetch(`{% url 'delete_grade' 0 %}`.replace('0', id), {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': '{{ csrf_token }}'
+            }
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            alert(data.message);
+            location.reload();
+        } else {
+            alert('Error: ' + data.error);
+        }
+    } catch (error) {
+        alert('Error: ' + error.message);
+    }
+}
+
+async function deleteSection(id, name) {
+    if (!confirm(`Are you sure you want to delete section "${name}"? This action cannot be undone.`)) {
+        return;
+    }
+    
+    try {
+        const response = await fetch(`{% url 'delete_section' 0 %}`.replace('0', id), {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': '{{ csrf_token }}'
+            }
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            alert(data.message);
+            location.reload();
+        } else {
+            alert('Error: ' + data.error);
+        }
+    } catch (error) {
+        alert('Error: ' + error.message);
+    }
+}
+</script>
+{% endblock %}

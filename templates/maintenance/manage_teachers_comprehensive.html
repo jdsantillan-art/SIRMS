@@ -1,0 +1,887 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Teacher Account Management - SIRMS{% endblock %}
+
+{% block extra_css %}
+<style>
+    .timestamp-display {
+        cursor: not-allowed;
+        user-select: none;
+        min-width: 120px;
+    }
+    
+    .timestamp-display:hover {
+        transform: none;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 py-8">
+    <div class="mb-6 flex justify-between items-center">
+        <div>
+            <h1 class="text-4xl font-bold text-blue-700 mb-2">👨‍🏫 Teacher Account Management</h1>
+            <p class="text-gray-600">Manage teacher accounts with curriculum, track, grade, and section based on teacher assignments</p>
+        </div>
+        <div class="flex space-x-2">
+            <button onclick="openImportModal()" class="bg-purple-600 hover:bg-purple-700 text-white px-3 py-1.5 rounded-md flex items-center space-x-1.5 text-sm">
+                <i class="fas fa-file-import text-xs"></i>
+                <span>Import CSV</span>
+            </button>
+            <button onclick="openAddModal()" class="bg-green-600 hover:bg-green-700 text-white px-3 py-1.5 rounded-md flex items-center space-x-1.5 text-sm">
+                <i class="fas fa-plus text-xs"></i>
+                <span>Add Teacher</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Search and Filters -->
+    <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+        <form method="GET" class="grid grid-cols-1 md:grid-cols-5 gap-4">
+            <input type="text" name="search" value="{{ search_query }}" placeholder="Search by name, username, or employee ID..." 
+                   class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+            <select name="curriculum" class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                <option value="">All Curricula</option>
+                {% for curriculum in curriculums %}
+                <option value="{{ curriculum.id }}" {% if curriculum_filter == curriculum.id|stringformat:"s" %}selected{% endif %}>{{ curriculum.name }}</option>
+                {% endfor %}
+            </select>
+            <select name="grade" class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                <option value="">All Grades</option>
+                {% for grade in grades %}
+                <option value="{{ grade }}" {% if grade_filter == grade %}selected{% endif %}>{{ grade }}</option>
+                {% endfor %}
+            </select>
+            <select name="section" class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                <option value="">All Sections</option>
+                {% for section in sections %}
+                <option value="{{ section }}" {% if section_filter == section %}selected{% endif %}>{{ section }}</option>
+                {% endfor %}
+            </select>
+            <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg">
+                <i class="fas fa-search"></i> Filter
+            </button>
+        </form>
+    </div>
+
+    <!-- Teachers Table -->
+    <div class="bg-white rounded-lg shadow-md overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-blue-50">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Name</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Employee ID</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Username</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Password</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Curriculum</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Track</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Grade</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Section</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Academic Year</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Gender</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">CSV Imported</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Status</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    {% for teacher in teachers %}
+                    <tr class="hover:bg-gray-50">
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="text-sm font-medium text-gray-900">{{ teacher.get_full_name_with_middle }}</div>
+                            <div class="text-sm text-gray-500">{{ teacher.email|default:"No email" }}</div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            {% if teacher.employee_id %}
+                                <span class="font-semibold">{{ teacher.employee_id }}</span>
+                            {% else %}
+                                <span class="text-gray-400">—</span>
+                            {% endif %}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ teacher.username }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            <span class="password-display" data-teacher-id="{{ teacher.id }}" data-must-change="{{ teacher.must_change_password|yesno:'true,false' }}">
+                                {% if teacher.must_change_password %}
+                                    <span class="text-gray-400">Loading...</span>
+                                {% else %}
+                                    <span class="text-green-600 italic flex items-center space-x-1">
+                                        <i class="fas fa-lock text-xs"></i>
+                                        <span>Changed by teacher</span>
+                                    </span>
+                                {% endif %}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            {% if teacher.curriculum %}
+                                <span class="font-medium">{{ teacher.curriculum.name }}</span>
+                            {% else %}
+                                <span class="text-red-500 font-semibold">⚠ Missing</span>
+                            {% endif %}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            {% if teacher.track_code %}
+                                <span class="px-2 py-1 bg-blue-100 text-blue-800 rounded font-semibold">{{ teacher.track_code }}</span>
+                            {% else %}
+                                <span class="text-red-500 font-semibold">⚠ Missing</span>
+                            {% endif %}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            {% if teacher.grade_level %}
+                                <span class="font-medium">Grade {{ teacher.grade_level }}</span>
+                            {% else %}
+                                <span class="text-red-500 font-semibold">⚠ Missing</span>
+                            {% endif %}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            {% if teacher.section %}
+                                <span class="font-medium">{{ teacher.section }}</span>
+                            {% else %}
+                                <span class="text-red-500 font-semibold">⚠ Missing</span>
+                            {% endif %}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            {% if teacher.academic_year %}
+                                <span class="font-medium">{{ teacher.academic_year.year }}</span>
+                            {% else %}
+                                <span class="text-gray-400">—</span>
+                            {% endif %}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            {% if teacher.gender %}
+                                <span class="px-2 py-1 text-xs font-semibold rounded-full {% if teacher.gender == 'male' %}bg-blue-100 text-blue-800{% else %}bg-pink-100 text-pink-800{% endif %}">
+                                    {{ teacher.get_gender_display|default:teacher.gender|title }}
+                                </span>
+                            {% else %}
+                                <span class="text-gray-400">—</span>
+                            {% endif %}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            {% if teacher.csv_imported_at %}
+                                <div class="timestamp-display bg-green-50 border border-green-200 rounded px-3 py-2 text-sm">
+                                    <div class="text-green-700 text-xs">
+                                        <div class="flex items-center mb-1">
+                                            <i class="fas fa-calendar-alt text-xs mr-2"></i>
+                                            {{ teacher.csv_imported_at|date:"M d, Y" }}
+                                        </div>
+                                        <div class="flex items-center">
+                                            <i class="fas fa-clock text-xs mr-2"></i>
+                                            {{ teacher.csv_imported_at|time:"H:i:s" }}
+                                        </div>
+                                    </div>
+                                </div>
+                            {% else %}
+                                <div class="timestamp-display bg-gray-50 border border-gray-200 rounded px-3 py-2 text-sm">
+                                    <div class="text-gray-500 text-xs">
+                                        <div class="flex items-center">
+                                            <i class="fas fa-calendar-alt text-xs mr-2"></i>
+                                            {{ teacher.account_created_at|date:"M d, Y"|default:"Unknown" }}
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endif %}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            {% if teacher.is_active %}
+                            <span class="px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">Active</span>
+                            {% else %}
+                            <span class="px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800">Inactive</span>
+                            {% endif %}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                            <button onclick="resetPassword({{ teacher.id }}, '{{ teacher.get_full_name_with_middle|escapejs }}')" class="text-yellow-600 hover:text-yellow-900">
+                                <i class="fas fa-key"></i> Reset Password
+                            </button>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="12" class="px-6 py-4 text-center text-gray-500">No teachers found</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination -->
+        {% if teachers.has_other_pages %}
+        <div class="bg-gray-50 px-4 py-3 flex items-center justify-between border-t border-gray-200">
+            <div class="flex-1 flex justify-between sm:hidden">
+                {% if teachers.has_previous %}
+                <a href="?page={{ teachers.previous_page_number }}" class="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">Previous</a>
+                {% endif %}
+                {% if teachers.has_next %}
+                <a href="?page={{ teachers.next_page_number }}" class="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">Next</a>
+                {% endif %}
+            </div>
+            <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+                <div>
+                    <p class="text-sm text-gray-700">
+                        Showing <span class="font-medium">{{ teachers.start_index }}</span> to <span class="font-medium">{{ teachers.end_index }}</span> of <span class="font-medium">{{ teachers.paginator.count }}</span> results
+                    </p>
+                </div>
+                <div>
+                    <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px">
+                        {% if teachers.has_previous %}
+                        <a href="?page={{ teachers.previous_page_number }}" class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">Previous</a>
+                        {% endif %}
+                        <span class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700">Page {{ teachers.number }} of {{ teachers.paginator.num_pages }}</span>
+                        {% if teachers.has_next %}
+                        <a href="?page={{ teachers.next_page_number }}" class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">Next</a>
+                        {% endif %}
+                    </nav>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Add Teacher Modal -->
+<div id="addModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden z-50">
+    <div class="flex items-center justify-center min-h-screen p-4">
+        <div class="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-screen overflow-y-auto">
+            <div class="p-6">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-2xl font-bold text-gray-800">Add New Teacher</h3>
+                    <button onclick="closeAddModal()" class="text-gray-400 hover:text-gray-600">
+                        <i class="fas fa-times text-2xl"></i>
+                    </button>
+                </div>
+                <form id="addTeacherForm" onsubmit="submitAddTeacher(event)">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="add_teacher">
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">First Name *</label>
+                            <input type="text" name="first_name" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Middle Name</label>
+                            <input type="text" name="middle_name" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Last Name *</label>
+                            <input type="text" name="last_name" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Employee ID</label>
+                            <input type="text" name="employee_id" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" placeholder="Optional">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Curriculum <span class="text-red-500">*</span></label>
+                            <select name="curriculum" required class="w-full px-3 py-2 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                                <option value="">Select Curriculum</option>
+                                {% for curriculum in curriculums %}
+                                <option value="{{ curriculum.id }}">{{ curriculum.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Track <span class="text-red-500">*</span></label>
+                            <select name="track_code" id="trackSelect" required class="w-full px-3 py-2 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                                <option value="">Select Track</option>
+                                <option value="STE">STE</option>
+                                <option value="SPA">SPA</option>
+                                <option value="ICT">ICT</option>
+                                <option value="RBEC">RBEC</option>
+                                <option value="STVEP">STVEP</option>
+                                <option value="STEM">STEM</option>
+                                <option value="Arts & Design">Arts & Design</option>
+                                <option value="TVL – ICT">TVL – ICT</option>
+                                <option value="TVL – SMAW">TVL – SMAW</option>
+                                <option value="TVL – EIM">TVL – EIM</option>
+                                <option value="TVL – Dressmaking">TVL – Dressmaking</option>
+                                <option value="TVL – FBS">TVL – FBS</option>
+                                <option value="TVL – Bread & Pastry">TVL – Bread & Pastry</option>
+                                <option value="TVL – CSS">TVL – CSS</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Grade Level <span class="text-red-500">*</span></label>
+                            <select name="grade_level" required class="w-full px-3 py-2 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                                <option value="">Select Grade</option>
+                                <option value="7">Grade 7</option>
+                                <option value="8">Grade 8</option>
+                                <option value="9">Grade 9</option>
+                                <option value="10">Grade 10</option>
+                                <option value="11">Grade 11</option>
+                                <option value="12">Grade 12</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Section <span class="text-red-500">*</span></label>
+                            <input type="text" name="section" required class="w-full px-3 py-2 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" placeholder="e.g., Section 1">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Academic Year</label>
+                            <select name="academic_year" class="w-full px-3 py-2 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                                <option value="">Select Academic Year</option>
+                                {% for year in academic_years %}
+                                <option value="{{ year.id }}" {% if year.is_current %}selected{% endif %}>{{ year.year }}</option>
+                                {% endfor %}
+                            </select>
+                            <p class="text-xs text-gray-500 mt-1">Current academic year selected by default</p>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Gender</label>
+                            <select name="gender" class="w-full px-3 py-2 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                                <option value="">Select Gender</option>
+                                <option value="male">Male</option>
+                                <option value="female">Female</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="mt-6 flex justify-end space-x-3">
+                        <button type="button" onclick="closeAddModal()" class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">Cancel</button>
+                        <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">Add Teacher</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Teacher Modal -->
+<div id="editModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden z-50">
+    <div class="flex items-center justify-center min-h-screen p-4">
+        <div class="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-screen overflow-y-auto">
+            <div class="p-6">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-2xl font-bold text-gray-800">
+                        <i class="fas fa-edit text-blue-600"></i> Edit Teacher
+                    </h3>
+                    <button onclick="closeEditModal()" class="text-gray-400 hover:text-gray-600">
+                        <i class="fas fa-times text-2xl"></i>
+                    </button>
+                </div>
+                <form id="editTeacherForm" onsubmit="submitEditTeacher(event)">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="edit_teacher">
+                    <input type="hidden" id="edit_teacher_id" name="teacher_id">
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">First Name *</label>
+                            <input type="text" id="edit_first_name" name="first_name" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Middle Name</label>
+                            <input type="text" id="edit_middle_name" name="middle_name" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Last Name *</label>
+                            <input type="text" id="edit_last_name" name="last_name" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Employee ID</label>
+                            <input type="text" id="edit_employee_id" name="employee_id" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" placeholder="Optional">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Curriculum <span class="text-red-500">*</span></label>
+                            <select id="edit_curriculum" name="curriculum" required class="w-full px-3 py-2 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                                <option value="">Select Curriculum</option>
+                                {% for curriculum in curriculums %}
+                                <option value="{{ curriculum.id }}">{{ curriculum.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Track <span class="text-red-500">*</span></label>
+                            <select id="edit_track_code" name="track_code" required class="w-full px-3 py-2 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                                <option value="">Select Track</option>
+                                <option value="STE">STE</option>
+                                <option value="SPA">SPA</option>
+                                <option value="ICT">ICT</option>
+                                <option value="RBEC">RBEC</option>
+                                <option value="STVEP">STVEP</option>
+                                <option value="STEM">STEM</option>
+                                <option value="Arts & Design">Arts & Design</option>
+                                <option value="TVL – ICT">TVL – ICT</option>
+                                <option value="TVL – SMAW">TVL – SMAW</option>
+                                <option value="TVL – EIM">TVL – EIM</option>
+                                <option value="TVL – Dressmaking">TVL – Dressmaking</option>
+                                <option value="TVL – FBS">TVL – FBS</option>
+                                <option value="TVL – Bread & Pastry">TVL – Bread & Pastry</option>
+                                <option value="TVL – CSS">TVL – CSS</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Grade Level <span class="text-red-500">*</span></label>
+                            <select id="edit_grade_level" name="grade_level" required class="w-full px-3 py-2 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                                <option value="">Select Grade</option>
+                                <option value="7">Grade 7</option>
+                                <option value="8">Grade 8</option>
+                                <option value="9">Grade 9</option>
+                                <option value="10">Grade 10</option>
+                                <option value="11">Grade 11</option>
+                                <option value="12">Grade 12</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Section <span class="text-red-500">*</span></label>
+                            <input type="text" id="edit_section" name="section" required class="w-full px-3 py-2 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" placeholder="e.g., Section 1">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Academic Year</label>
+                            <select id="edit_academic_year" name="academic_year" class="w-full px-3 py-2 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                                <option value="">Select Academic Year</option>
+                                {% for year in academic_years %}
+                                <option value="{{ year.id }}">{{ year.year }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Gender</label>
+                            <select id="edit_gender" name="gender" class="w-full px-3 py-2 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                                <option value="">Select Gender</option>
+                                <option value="male">Male</option>
+                                <option value="female">Female</option>
+                            </select>
+                        </div>
+                        <div class="col-span-2">
+                            <label class="flex items-center space-x-2">
+                                <input type="checkbox" id="edit_is_active" name="is_active" value="true" class="rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                                <span class="text-sm font-medium text-gray-700">Active Account</span>
+                            </label>
+                        </div>
+                    </div>
+                    <div class="mt-6 flex justify-end space-x-3">
+                        <button type="button" onclick="closeEditModal()" class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">Cancel</button>
+                        <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+                            <i class="fas fa-save mr-1"></i> Save Changes
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function openAddModal() {
+    document.getElementById('addModal').classList.remove('hidden');
+}
+
+function closeAddModal() {
+    document.getElementById('addModal').classList.add('hidden');
+}
+
+async function submitAddTeacher(event) {
+    event.preventDefault();
+    const form = event.target;
+    const formData = new FormData(form);
+    
+    try {
+        const response = await fetch('{% url "manage_teachers_comprehensive" %}', {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            }
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            // Store password in sessionStorage to display after reload
+            const passwordData = {
+                teacherId: data.teacher_id,
+                username: data.username,
+                password: data.password,
+                timestamp: Date.now()
+            };
+            sessionStorage.setItem(`teacher_password_${data.teacher_id}`, JSON.stringify(passwordData));
+            
+            alert(`Teacher created successfully!\nUsername: ${data.username}\nPassword: ${data.password}\n\nPassword will be displayed in the table after reload.\n\nNote: Password will only be visible until the teacher changes it for privacy.`);
+            location.reload();
+        } else {
+            alert('Error: ' + data.error);
+        }
+    } catch (error) {
+        alert('Error creating teacher: ' + error.message);
+    }
+}
+
+// Generate Teacher Accounts from Assignments
+async function generateTeacherAccounts() {
+    if (!confirm('Generate teacher accounts from all active Teacher Assignments? Teachers will be created with their assigned curriculum, track, grade, and section. Teachers will be required to change their password on first login.')) {
+        return;
+    }
+    
+    try {
+        const response = await fetch('{% url "generate_teacher_accounts" %}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'X-CSRFToken': '{{ csrf_token }}'
+            },
+            body: ''
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            // Store passwords in sessionStorage to display after reload
+            data.teachers.forEach((teacher) => {
+                const passwordData = {
+                    teacherId: teacher.id,
+                    username: teacher.username,
+                    password: teacher.password,
+                    timestamp: Date.now()
+                };
+                sessionStorage.setItem(`teacher_password_${teacher.id}`, JSON.stringify(passwordData));
+            });
+            
+            // Build credentials display
+            let credentialsText = `Successfully created ${data.created_count} teacher accounts!\n\n`;
+            if (data.skipped_count > 0) {
+                credentialsText += `Skipped ${data.skipped_count} existing accounts (updated with assignment data).\n\n`;
+            }
+            credentialsText += 'CREDENTIALS:\n';
+            credentialsText += '='.repeat(80) + '\n';
+            
+            data.teachers.forEach((teacher, index) => {
+                credentialsText += `\n${index + 1}. ${teacher.name}\n`;
+                credentialsText += `   Username: ${teacher.username}\n`;
+                credentialsText += `   Password: ${teacher.password}\n`;
+                credentialsText += `   Curriculum: ${teacher.curriculum}\n`;
+                credentialsText += `   Track: ${teacher.track} | Grade: ${teacher.grade} | Section: ${teacher.section}\n`;
+            });
+            
+            if (data.errors && data.errors.length > 0) {
+                credentialsText += '\n\nERRORS:\n';
+                credentialsText += '='.repeat(80) + '\n';
+                data.errors.forEach((error) => {
+                    credentialsText += `\n- ${error}\n`;
+                });
+            }
+            
+            credentialsText += '\n' + '='.repeat(80) + '\n';
+            credentialsText += '\nIMPORTANT: Teachers must change their password on first login!';
+            credentialsText += '\n\nPasswords will be displayed in the table after reload.';
+            credentialsText += '\n\nPRIVACY: Passwords will only be visible until teachers change them.';
+            
+            // Show credentials in alert
+            alert(credentialsText);
+            
+            // Also copy to clipboard if possible
+            if (navigator.clipboard) {
+                navigator.clipboard.writeText(credentialsText).then(() => {
+                    console.log('Credentials copied to clipboard');
+                });
+            }
+            
+            // Reload page to show new teachers
+            location.reload();
+        } else {
+            alert('Error: ' + data.error);
+        }
+    } catch (error) {
+        alert('Error generating teacher accounts: ' + error.message);
+    }
+}
+
+// Display passwords from sessionStorage on page load
+document.addEventListener('DOMContentLoaded', function() {
+    // Find all password display elements
+    const passwordDisplays = document.querySelectorAll('.password-display');
+    
+    passwordDisplays.forEach(function(display) {
+        const teacherId = display.getAttribute('data-teacher-id');
+        const mustChange = display.getAttribute('data-must-change') === 'true';
+        
+        if (teacherId && mustChange) {
+            // Only show password if teacher hasn't changed it yet
+            // Check if password is stored in sessionStorage
+            const storedData = sessionStorage.getItem(`teacher_password_${teacherId}`);
+            if (storedData) {
+                try {
+                    const passwordData = JSON.parse(storedData);
+                    // Display password - it will remain visible until teacher changes it
+                    display.innerHTML = `
+                        <div class="flex items-center space-x-2">
+                            <code class="px-2 py-1 bg-yellow-100 text-yellow-800 rounded font-mono text-xs">${passwordData.password}</code>
+                            <button onclick="copyPassword('${passwordData.password}')" class="text-blue-600 hover:text-blue-800" title="Copy password">
+                                <i class="fas fa-copy text-xs"></i>
+                            </button>
+                            <span class="text-xs text-gray-500">(Temporary - until changed)</span>
+                        </div>
+                    `;
+                } catch (e) {
+                    console.error('Error parsing stored password data:', e);
+                    display.innerHTML = '<span class="text-gray-400">N/A</span>';
+                }
+            } else {
+                // No stored password, show message
+                display.innerHTML = '<span class="text-gray-400">Password not available</span>';
+            }
+        } else if (!mustChange) {
+            // Teacher has changed password, show privacy message
+            display.innerHTML = '<span class="text-gray-500 italic">Changed by teacher</span>';
+        }
+    });
+});
+
+// Copy password to clipboard
+function copyPassword(password) {
+    if (navigator.clipboard) {
+        navigator.clipboard.writeText(password).then(() => {
+            alert('Password copied to clipboard!');
+        }).catch(() => {
+            // Fallback for older browsers
+            const textArea = document.createElement('textarea');
+            textArea.value = password;
+            document.body.appendChild(textArea);
+            textArea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textArea);
+            alert('Password copied to clipboard!');
+        });
+    } else {
+        // Fallback for older browsers
+        const textArea = document.createElement('textarea');
+        textArea.value = password;
+        document.body.appendChild(textArea);
+        textArea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textArea);
+        alert('Password copied to clipboard!');
+    }
+}
+
+function editTeacher(id, firstName, middleName, lastName, employeeId, curriculumId, trackCode, gradeLevel, section, academicYearId, gender, isActive) {
+    // Populate edit form
+    document.getElementById('edit_teacher_id').value = id;
+    document.getElementById('edit_first_name').value = firstName || '';
+    document.getElementById('edit_middle_name').value = middleName || '';
+    document.getElementById('edit_last_name').value = lastName || '';
+    document.getElementById('edit_employee_id').value = employeeId || '';
+    document.getElementById('edit_curriculum').value = curriculumId || '';
+    document.getElementById('edit_track_code').value = trackCode || '';
+    document.getElementById('edit_grade_level').value = gradeLevel || '';
+    document.getElementById('edit_section').value = section || '';
+    document.getElementById('edit_academic_year').value = academicYearId || '';
+    document.getElementById('edit_gender').value = gender || '';
+    document.getElementById('edit_is_active').checked = isActive === 'true';
+    
+    // Show modal
+    document.getElementById('editModal').classList.remove('hidden');
+}
+
+function closeEditModal() {
+    document.getElementById('editModal').classList.add('hidden');
+    document.getElementById('editTeacherForm').reset();
+}
+
+async function submitEditTeacher(event) {
+    event.preventDefault();
+    const form = event.target;
+    const formData = new FormData(form);
+    
+    // Explicitly set is_active value (checkboxes don't send value when unchecked)
+    const isActiveCheckbox = document.getElementById('edit_is_active');
+    formData.set('is_active', isActiveCheckbox.checked ? 'true' : 'false');
+    
+    try {
+        const response = await fetch('{% url "manage_teachers_comprehensive" %}', {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            }
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            alert('Teacher updated successfully!');
+            location.reload();
+        } else {
+            alert('Error: ' + data.error);
+        }
+    } catch (error) {
+        alert('Error updating teacher: ' + error.message);
+    }
+}
+
+// Import Modal Functions
+function openImportModal() {
+    document.getElementById('importModal').classList.remove('hidden');
+}
+
+function closeImportModal() {
+    document.getElementById('importModal').classList.add('hidden');
+    document.getElementById('importTeacherForm').reset();
+}
+
+async function submitImportTeachers(event) {
+    event.preventDefault();
+    const form = event.target;
+    const formData = new FormData(form);
+    const fileInput = document.getElementById('csv_file');
+    
+    if (!fileInput.files || !fileInput.files[0]) {
+        alert('Please select a CSV file to import.');
+        return;
+    }
+    
+    // Show loading state
+    const submitBtn = form.querySelector('button[type="submit"]');
+    const originalText = submitBtn.innerHTML;
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Importing...';
+    
+    try {
+        const response = await fetch('{% url "import_teachers_csv" %}', {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-CSRFToken': '{{ csrf_token }}'
+            }
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            let message = `Successfully imported ${data.created_count} teacher(s)!\n\n`;
+            if (data.updated_count > 0) {
+                message += `Updated ${data.updated_count} existing teacher(s).\n\n`;
+            }
+            if (data.errors && data.errors.length > 0) {
+                message += `Errors (${data.errors.length}):\n`;
+                data.errors.slice(0, 10).forEach((error, index) => {
+                    message += `${index + 1}. ${error}\n`;
+                });
+                if (data.errors.length > 10) {
+                    message += `... and ${data.errors.length - 10} more errors.\n`;
+                }
+            }
+            if (data.teachers && data.teachers.length > 0) {
+                // Store passwords in sessionStorage
+                data.teachers.forEach((teacher) => {
+                    if (teacher.password) {
+                        const passwordData = {
+                            teacherId: teacher.id,
+                            username: teacher.username,
+                            password: teacher.password,
+                            timestamp: Date.now()
+                        };
+                        sessionStorage.setItem(`teacher_password_${teacher.id}`, JSON.stringify(passwordData));
+                    }
+                });
+            }
+            alert(message);
+            location.reload();
+        } else {
+            alert('Error: ' + (data.error || 'Failed to import teachers. Please check the CSV format.'));
+        }
+    } catch (error) {
+        console.error('Error importing teachers:', error);
+        alert('Error importing teachers: ' + error.message);
+    } finally {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = originalText;
+    }
+}
+
+async function resetPassword(userId, userName) {
+    if (!confirm(`Reset password for "${userName}"?`)) return;
+    
+    const formData = new FormData();
+    formData.append('user_id', userId);
+    formData.append('reset_method', 'manual');
+    formData.append('csrfmiddlewaretoken', document.querySelector('[name=csrfmiddlewaretoken]').value);
+    
+    try {
+        const response = await fetch('{% url "initiate_password_reset" %}', {
+            method: 'POST',
+            body: formData
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            // Store password in sessionStorage to display in the table after reload
+            const passwordData = {
+                teacherId: userId,
+                username: data.username,
+                password: data.temp_password,
+                timestamp: Date.now()
+            };
+            sessionStorage.setItem(`teacher_password_${userId}`, JSON.stringify(passwordData));
+            
+            alert(`✅ Password reset successfully!\n\nUsername: ${data.username}\nTemporary Password: ${data.temp_password}\nEmail: ${data.user_email}\n\nPassword will be displayed in the table after reload.\n\nPlease provide these credentials to the teacher.`);
+            location.reload();
+        } else {
+            alert(`❌ Error: ${data.error}`);
+        }
+    } catch (error) {
+        alert(`❌ Error: ${error.message}`);
+    }
+}
+
+</script>
+
+<!-- Import CSV Modal -->
+<div id="importModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden z-50">
+    <div class="flex items-center justify-center min-h-screen p-4">
+        <div class="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-screen overflow-y-auto">
+            <div class="p-6">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-2xl font-bold text-gray-800">
+                        <i class="fas fa-file-import text-purple-600"></i> Import Teachers from CSV
+                    </h3>
+                    <button onclick="closeImportModal()" class="text-gray-400 hover:text-gray-600">
+                        <i class="fas fa-times text-2xl"></i>
+                    </button>
+                </div>
+                
+                <div class="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                    <h4 class="font-semibold text-blue-800 mb-2">CSV Format Requirements:</h4>
+                    <p class="text-sm text-blue-700 mb-2">Your CSV file must include the following columns (in any order):</p>
+                    <ul class="text-sm text-blue-700 list-disc list-inside space-y-1">
+                        <li><strong>Required:</strong> first_name, last_name</li>
+                        <li><strong>Optional:</strong> middle_name, email, username, employee_id, curriculum (name), track_code, grade_level, section, academic_year (year), gender (male/female)</li>
+                    </ul>
+                    <p class="text-sm text-blue-700 mt-2"><strong>Note:</strong> If username is not provided, it will be auto-generated from name. If email is not provided, it will be auto-generated.</p>
+                </div>
+                
+                <div class="mb-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                    <h4 class="font-semibold text-yellow-800 mb-2">Example CSV:</h4>
+                    <pre class="text-xs bg-white p-2 rounded border overflow-x-auto">first_name,last_name,middle_name,employee_id,curriculum,track_code,grade_level,section,gender
+John,Smith,Doe,EMP001,Junior High School,RBEC,9,3,male
+Jane,Doe,,EMP002,Senior High School,STEM,11,1,female</pre>
+                </div>
+                
+                <form id="importTeacherForm" onsubmit="submitImportTeachers(event)">
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Select CSV File *</label>
+                        <input type="file" id="csv_file" name="csv_file" accept=".csv" required 
+                               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent">
+                        <p class="text-xs text-gray-500 mt-1">Only CSV files are accepted</p>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label class="flex items-center space-x-2">
+                            <input type="checkbox" name="update_existing" value="true" class="rounded border-gray-300 text-purple-600 focus:ring-purple-500">
+                            <span class="text-sm text-gray-700">Update existing teachers if employee_id or username matches</span>
+                        </label>
+                    </div>
+                    
+                    <div class="flex justify-end space-x-3">
+                        <button type="button" onclick="closeImportModal()" class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">Cancel</button>
+                        <button type="submit" class="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700">
+                            <i class="fas fa-upload mr-1"></i> Import Teachers
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+
+
+

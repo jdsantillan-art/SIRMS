@@ -1,0 +1,238 @@
+{% extends 'base.html' %}
+
+{% block title %}Follow-Up Records - SIRMS{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 py-8">
+    <div class="mb-6">
+        <h1 class="text-3xl font-bold text-gray-800 mb-2">Follow-Up Counseling Records</h1>
+        <p class="text-gray-600">View and manage all follow-up records</p>
+    </div>
+
+    {% if follow_ups %}
+    <div class="bg-white rounded-lg shadow-md overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Student</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Case ID</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Session Date</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Follow-Up Notes</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Next Follow-Up</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Created</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    {% for follow_up in follow_ups %}
+                    <tr class="hover:bg-gray-50">
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="text-sm font-medium text-gray-900">{{ follow_up.student.get_full_name }}</div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="text-sm text-gray-900">
+                                {% if follow_up.report %}
+                                    {{ follow_up.report.case_id }}
+                                {% else %}
+                                    <span class="text-gray-400">-</span>
+                                {% endif %}
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="text-sm text-gray-900">{{ follow_up.session_date|date:"M d, Y" }}</div>
+                            <div class="text-xs text-gray-500">{{ follow_up.session_date|date:"h:i A" }}</div>
+                        </td>
+                        <td class="px-6 py-4">
+                            <div class="text-sm text-gray-900 max-w-xs truncate">
+                                {{ follow_up.follow_up_notes|truncatewords:20 }}
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            {% if follow_up.next_follow_up_date %}
+                            <div class="text-sm text-gray-900">{{ follow_up.next_follow_up_date|date:"M d, Y" }}</div>
+                            <div class="text-xs text-gray-500">{{ follow_up.next_follow_up_date|date:"h:i A" }}</div>
+                            {% else %}
+                            <span class="text-xs text-gray-400">Not scheduled</span>
+                            {% endif %}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            {% if follow_up.is_completed %}
+                            <span class="px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">Completed</span>
+                            {% else %}
+                            <span class="px-2 py-1 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-800">Pending</span>
+                            {% endif %}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="text-sm text-gray-900">{{ follow_up.created_at|date:"M d, Y" }}</div>
+                            <div class="text-xs text-gray-500">by {{ follow_up.created_by.get_full_name }}</div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                            <button onclick="showUpdateFollowUpModal({{ follow_up.id }}, '{{ follow_up.is_completed }}', '{{ follow_up.next_follow_up_date|date:"Y-m-d\TH:i"|default:"" }}')" 
+                                    class="text-blue-600 hover:text-blue-900 mr-3">
+                                <i class="fas fa-edit"></i> Update
+                            </button>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% else %}
+    <div class="bg-white rounded-lg shadow-md p-12 text-center">
+        <i class="fas fa-clipboard-list text-6xl text-gray-300 mb-4"></i>
+        <h3 class="text-xl font-semibold text-gray-700 mb-2">No Follow-Up Records</h3>
+        <p class="text-gray-500">You haven't created any follow-up records yet.</p>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Update Follow-Up Modal -->
+<div id="updateFollowUpModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
+    <div class="relative top-20 mx-auto p-5 border w-full max-w-md shadow-2xl rounded-2xl bg-white">
+        <div class="mt-3">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-bold text-gray-900">Update Follow-Up Status</h3>
+                <button onclick="closeUpdateFollowUpModal()" class="text-gray-400 hover:text-gray-600">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+            
+            <form method="post" id="updateFollowUpForm" action="">
+                {% csrf_token %}
+                <input type="hidden" name="follow_up_id" id="hiddenFollowUpId">
+                
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-bold text-gray-800 mb-2">
+                            Status <span class="text-red-500">*</span>
+                        </label>
+                        <select name="status" id="followUpStatusSelect" 
+                                class="w-full px-3 py-2 border-2 border-gray-300 rounded-lg outline-none focus:border-blue-500" 
+                                onchange="toggleFollowUpFields()" required>
+                            <option value="">Select Status</option>
+                            <option value="completed">Completed</option>
+                            <option value="follow_up_again">Follow Up Again</option>
+                        </select>
+                    </div>
+                    
+                    <!-- Follow-Up Again Fields (shown when "Follow Up Again" is selected) -->
+                    <div id="followUpAgainFields" class="hidden">
+                        <div>
+                            <label class="block text-sm font-bold text-gray-800 mb-2">
+                                Next Follow-Up Date & Time <span class="text-red-500">*</span>
+                            </label>
+                            <input type="datetime-local" name="next_follow_up_date" id="nextFollowUpDate" 
+                                   class="w-full px-3 py-2 border-2 border-gray-300 rounded-lg outline-none focus:border-blue-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-bold text-gray-800 mb-2">
+                                Location <span class="text-red-500">*</span>
+                            </label>
+                            <input type="text" name="follow_up_location" id="followUpLocation" 
+                                   class="w-full px-3 py-2 border-2 border-gray-300 rounded-lg outline-none focus:border-blue-500" 
+                                   placeholder="e.g., Guidance Office, Room 201">
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-bold text-gray-800 mb-2">
+                            Notes
+                        </label>
+                        <textarea name="notes" id="followUpNotes" rows="4" 
+                                  class="w-full px-3 py-2 border-2 border-gray-300 rounded-lg outline-none focus:border-blue-500" 
+                                  placeholder="Add notes about the follow-up..."></textarea>
+                    </div>
+                </div>
+                
+                <div class="flex justify-end space-x-2 mt-6 pt-4 border-t">
+                    <button type="button" onclick="closeUpdateFollowUpModal()" 
+                            class="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 text-sm font-semibold">
+                        Cancel
+                    </button>
+                    <button type="submit" 
+                            class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-semibold">
+                        <i class="fas fa-save mr-1"></i>Update
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+function showUpdateFollowUpModal(followUpId, isCompleted, nextFollowUpDate) {
+    document.getElementById('updateFollowUpModal').classList.remove('hidden');
+    document.getElementById('hiddenFollowUpId').value = followUpId;
+    
+    // Set the correct update URL based on user role
+    {% if user.role == 'do' %}
+    document.getElementById('updateFollowUpForm').action = `{% url 'update_do_follow_up' 0 %}`.replace('0', followUpId);
+    {% elif user.role == 'counselor' or user.role == 'guidance' %}
+    document.getElementById('updateFollowUpForm').action = `{% url 'update_counselor_follow_up' 0 %}`.replace('0', followUpId);
+    {% elif user.role == 'esp_teacher' %}
+    document.getElementById('updateFollowUpForm').action = `{% url 'update_esp_follow_up' 0 %}`.replace('0', followUpId);
+    {% else %}
+    document.getElementById('updateFollowUpForm').action = `{% url 'update_follow_up_generic' 0 %}`.replace('0', followUpId);
+    {% endif %}
+    
+    // Reset form
+    document.getElementById('followUpStatusSelect').value = '';
+    document.getElementById('followUpNotes').value = '';
+    document.getElementById('nextFollowUpDate').value = '';
+    document.getElementById('followUpLocation').value = '';
+    document.getElementById('followUpAgainFields').classList.add('hidden');
+    
+    // Pre-fill next follow-up date if exists
+    if (nextFollowUpDate) {
+        document.getElementById('nextFollowUpDate').value = nextFollowUpDate;
+    }
+}
+
+function closeUpdateFollowUpModal() {
+    document.getElementById('updateFollowUpModal').classList.add('hidden');
+    // Reset form
+    document.getElementById('followUpStatusSelect').value = '';
+    document.getElementById('followUpNotes').value = '';
+    document.getElementById('nextFollowUpDate').value = '';
+    document.getElementById('followUpLocation').value = '';
+    document.getElementById('followUpAgainFields').classList.add('hidden');
+}
+
+function toggleFollowUpFields() {
+    const statusSelect = document.getElementById('followUpStatusSelect');
+    const followUpFields = document.getElementById('followUpAgainFields');
+    const nextFollowUpDate = document.getElementById('nextFollowUpDate');
+    const followUpLocation = document.getElementById('followUpLocation');
+    
+    if (statusSelect.value === 'follow_up_again') {
+        followUpFields.classList.remove('hidden');
+        nextFollowUpDate.required = true;
+        followUpLocation.required = true;
+    } else {
+        followUpFields.classList.add('hidden');
+        nextFollowUpDate.required = false;
+        followUpLocation.required = false;
+        nextFollowUpDate.value = '';
+        followUpLocation.value = '';
+    }
+}
+
+// Close modal when clicking outside
+document.getElementById('updateFollowUpModal').addEventListener('click', function(e) {
+    if (e.target === this) {
+        closeUpdateFollowUpModal();
+    }
+});
+
+// ESC key to close modal
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        closeUpdateFollowUpModal();
+    }
+});
+</script>
+{% endblock %}
+

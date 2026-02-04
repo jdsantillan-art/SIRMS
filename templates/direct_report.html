@@ -1,0 +1,608 @@
+{% extends 'base.html' %}
+
+{% block title %}Direct Report - SIRMS{% endblock %}
+{% block page_title %}Direct Report{% endblock %}
+
+{% block content %}
+<div class="max-w-5xl mx-auto px-4 py-3">
+
+    <!-- Info Banner -->
+    <div class="mb-4 bg-green-50 border-l-4 border-green-500 p-4 rounded-lg">
+        <div class="flex items-start">
+            <i class="fas fa-info-circle text-green-600 mt-1 mr-3"></i>
+            <div>
+                <h3 class="text-sm font-bold text-green-900 mb-1">Direct Report Encoding</h3>
+                <p class="text-xs text-green-800">
+                    Use this form to manually encode incident reports made directly to your office. 
+                    The report will be recorded in the system and follow the standard process flow 
+                    (fact-checking, classification, counseling, and notifications).
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <div class="bg-white/95 backdrop-blur-xl rounded-3xl shadow-2xl border border-gray-100 overflow-hidden">
+        <!-- Header -->
+        <div class="bg-gradient-to-r from-emerald-600 to-teal-600 px-5 py-2.5">
+            <div class="flex items-center justify-between text-white">
+                <div class="flex items-center space-x-2">
+                    <i class="fas fa-file-medical text-sm"></i>
+                    <span class="font-bold text-base">Direct Report Encoding</span>
+                </div>
+                <div class="text-xs opacity-90">* Required</div>
+            </div>
+        </div>
+
+        <form method="post" enctype="multipart/form-data" id="incident-form" class="p-4" onsubmit="handleFormSubmit(event)">
+            {% csrf_token %}
+
+            <!-- Success/Info Messages -->
+            {% if messages %}
+            <div class="mb-3 space-y-1.5">
+                {% for message in messages %}
+                <div class="{% if message.tags == 'error' %}bg-red-50/80 border border-red-200{% elif message.tags == 'success' %}bg-green-50/80 border border-green-200{% else %}bg-blue-50/80 border border-blue-200{% endif %} rounded-lg p-1.5 flex items-start space-x-1.5 shadow-sm">
+                    <div class="flex-shrink-0 mt-0.5">
+                        {% if message.tags == 'error' %}
+                        <i class="fas fa-exclamation-circle text-red-500 text-xs"></i>
+                        {% elif message.tags == 'success' %}
+                        <i class="fas fa-check-circle text-green-500 text-xs"></i>
+                        {% else %}
+                        <i class="fas fa-info-circle text-blue-500 text-xs"></i>
+                        {% endif %}
+                    </div>
+                    <p class="text-xs {% if message.tags == 'error' %}text-red-700{% elif message.tags == 'success' %}text-green-700{% else %}text-blue-700{% endif %} leading-tight flex-1">{{ message }}</p>
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            <!-- Error Messages -->
+            {% if form.errors or form.non_field_errors %}
+            <div class="mb-3 space-y-1.5">
+                {% if form.non_field_errors %}
+                <div class="bg-red-50/80 border border-red-200 rounded-lg p-1.5 flex items-start space-x-1.5 shadow-sm">
+                    <div class="flex-shrink-0 mt-0.5">
+                        <i class="fas fa-exclamation-circle text-red-500 text-xs"></i>
+                    </div>
+                    <div class="flex-1">
+                        {% for error in form.non_field_errors %}
+                        <p class="text-xs text-red-700 leading-tight">{{ error }}</p>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+                {% for field in form %}
+                    {% if field.errors %}
+                    <div class="bg-red-50/80 border border-red-200 rounded-lg p-1.5 flex items-start space-x-1.5 shadow-sm">
+                        <div class="flex-shrink-0 mt-0.5">
+                            <i class="fas fa-exclamation-circle text-red-500 text-xs"></i>
+                        </div>
+                        <div class="flex-1">
+                            <p class="text-xs font-semibold text-red-700">{{ field.label }}:</p>
+                            {% for error in field.errors %}
+                            <p class="text-xs text-red-700 leading-tight">{{ error }}</p>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            <!-- Combined: Reporter & Academic Info -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-3 pb-3 border-b border-gray-200">
+                <!-- Reporter Information -->
+                <div>
+                    <div class="flex items-center space-x-1.5 mb-2">
+                        <div class="bg-emerald-100 p-1 rounded-lg">
+                            <i class="fas fa-user text-emerald-600 text-xs"></i>
+                        </div>
+                        <h2 class="text-sm font-bold text-gray-900">Reporter Info</h2>
+                        <span class="text-xs text-gray-500">(Person who reported to your office)</span>
+                    </div>
+                    <div class="space-y-2">
+                        <div class="grid grid-cols-2 gap-2">
+                            <div class="group">
+                                <label class="block text-xs font-semibold text-gray-700 mb-0.5">First Name <span class="text-red-500">*</span></label>
+                                {{ form.reporter_first_name }}
+                            </div>
+                            <div class="group">
+                                <label class="block text-xs font-semibold text-gray-700 mb-0.5">Last Name <span class="text-red-500">*</span></label>
+                                {{ form.reporter_last_name }}
+                            </div>
+                        </div>
+                        <div class="group">
+                            <label class="block text-xs font-semibold text-gray-700 mb-0.5">Middle Name</label>
+                            {{ form.reporter_middle_name }}
+                        </div>
+                        <div class="group">
+                            <label class="block text-xs font-semibold text-gray-700 mb-0.5">Gender</label>
+                            {{ form.student_gender }}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Academic Information -->
+                <div>
+                    <div class="flex items-center space-x-1.5 mb-2">
+                        <div class="bg-cyan-100 p-1 rounded-lg">
+                            <i class="fas fa-graduation-cap text-cyan-600 text-xs"></i>
+                        </div>
+                        <h2 class="text-sm font-bold text-gray-900">Academic Info</h2>
+                    </div>
+                    <div class="space-y-2">
+                        <div class="group">
+                            <label class="block text-xs font-semibold text-gray-700 mb-0.5">Curriculum <span class="text-red-500">*</span></label>
+                            {{ form.curriculum }}
+                        </div>
+                        <div class="group">
+                            <label class="block text-xs font-semibold text-gray-700 mb-0.5">Track</label>
+                            {{ form.track }}
+                        </div>
+                        <div class="grid grid-cols-2 gap-2">
+                            <div class="group">
+                                <label class="block text-xs font-semibold text-gray-700 mb-0.5">Grade Level</label>
+                                {{ form.grade_level }}
+                            </div>
+                            <div class="group">
+                                <label class="block text-xs font-semibold text-gray-700 mb-0.5">Section</label>
+                                {{ form.section_name }}
+                            </div>
+                        </div>
+                        <div class="group">
+                            <label class="block text-xs font-semibold text-gray-700 mb-0.5">Teacher</label>
+                            {{ form.teacher_name }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- NEW: Reporter is Victim & Party Type -->
+            <div class="mb-3 pb-3 border-b border-gray-200">
+                <div class="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-3">
+                    <label class="flex items-center cursor-pointer">
+                        <input type="checkbox" name="reporter_is_victim" id="reporterIsVictim" class="mr-2 h-4 w-4">
+                        <span class="text-sm font-semibold text-gray-800">
+                            <i class="fas fa-user-check text-blue-600 mr-2"></i>
+                            Reporter is a victim/involved party in this incident
+                        </span>
+                    </label>
+                </div>
+
+                <div class="group mb-3">
+                    <label class="block text-xs font-semibold text-gray-700 mb-1">
+                        Involved Party Type <span class="text-red-500">*</span>
+                    </label>
+                    <select name="party_type" id="partyType" class="w-full px-3 py-2 text-sm border-2 border-gray-300 rounded-lg focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 outline-none" required>
+                        <option value="">-- Select Type --</option>
+                        {% for option in party_type_options %}
+                        <option value="{{ option.value }}">{{ option.label }}</option>
+                        {% empty %}
+                        <option value="student">👨‍🎓 Student</option>
+                        <option value="teacher">👨‍🏫 Teacher/Staff</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Teacher Fields (hidden by default) -->
+                <div id="teacherFields" style="display:none;">
+                    <div class="bg-purple-50 border border-purple-200 rounded-lg p-3">
+                        <p class="text-xs text-purple-800 mb-2">
+                            <i class="fas fa-info-circle mr-1"></i>
+                            Teacher incidents are handled confidentially by DO and Guidance.
+                        </p>
+                        
+                        <div class="group mb-2">
+                            <label class="block text-xs font-semibold text-gray-700 mb-1">
+                                Teacher Name <span class="text-red-500">*</span>
+                            </label>
+                            <input type="text" name="teacher_name" id="teacherName" 
+                                   class="w-full px-3 py-2 text-sm border-2 border-gray-300 rounded-lg focus:border-purple-500 outline-none"
+                                   placeholder="Enter teacher's full name">
+                        </div>
+                        
+                        <div class="group mb-2">
+                            <label class="block text-xs font-semibold text-gray-700 mb-1">Department/Subject</label>
+                            <input type="text" name="department" 
+                                   class="w-full px-3 py-2 text-sm border-2 border-gray-300 rounded-lg focus:border-purple-500 outline-none"
+                                   placeholder="e.g., Math Department">
+                        </div>
+                        
+                        <label class="flex items-center">
+                            <input type="checkbox" name="is_confidential" checked class="mr-2 h-4 w-4">
+                            <span class="text-xs font-semibold text-gray-800">
+                                <i class="fas fa-lock text-purple-600 mr-1"></i>
+                                Mark as confidential (recommended)
+                            </span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Involved Students -->
+            <div class="mb-3 pb-3 border-b border-gray-200" id="studentFields">
+                <div class="flex items-center space-x-1.5 mb-2">
+                    <div class="bg-teal-100 p-1 rounded-lg">
+                        <i class="fas fa-users text-teal-600 text-xs"></i>
+                    </div>
+                    <h2 class="text-sm font-bold text-gray-900">Involved Students</h2>
+                </div>
+                <div class="group">
+                    <label class="block text-xs font-semibold text-gray-700 mb-0.5">Names or IDs</label>
+                    {{ form.involved_students }}
+                    <p class="text-xs text-gray-500 mt-1">
+                        <i class="fas fa-lightbulb mr-1"></i>
+                        Enter student email/username to auto-link, or just the name for record keeping
+                    </p>
+                </div>
+            </div>
+
+            <!-- Incident Details -->
+            <div class="mb-3">
+                <div class="flex items-center space-x-1.5 mb-2">
+                    <div class="bg-red-100 p-1 rounded-lg">
+                        <i class="fas fa-exclamation-triangle text-red-600 text-xs"></i>
+                    </div>
+                    <h2 class="text-sm font-bold text-gray-900">Incident Details</h2>
+                </div>
+                <div class="space-y-2">
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-2">
+                        <div class="group">
+                            <label class="block text-xs font-semibold text-gray-700 mb-0.5">Date <span class="text-red-500">*</span></label>
+                            {{ form.incident_date }}
+                        </div>
+                        <div class="group">
+                            <label class="block text-xs font-semibold text-gray-700 mb-0.5">Time <span class="text-red-500">*</span></label>
+                            {{ form.incident_time }}
+                        </div>
+                        <div class="group">
+                            <label class="block text-xs font-semibold text-gray-700 mb-0.5">Incident Type <span class="text-red-500">*</span></label>
+                            <select name="incident_type" id="id_incident_type" class="w-full px-2.5 py-1.5 text-sm border-2 border-gray-200 rounded-xl focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 transition-all outline-none" required>
+                                <option value="">Select Incident Type</option>
+                                <optgroup label="🚫 Prohibited Acts" class="font-bold text-red-700">
+                                    {% for incident_type in incident_types %}
+                                        {% if incident_type.severity == 'prohibited' %}
+                                        <option value="{{ incident_type.id }}">{{ incident_type.name }}</option>
+                                        {% endif %}
+                                    {% endfor %}
+                                </optgroup>
+                                <optgroup label="📋 Other School Policies" class="font-bold text-blue-700">
+                                    {% for incident_type in incident_types %}
+                                        {% if incident_type.severity == 'school_policy' %}
+                                        <option value="{{ incident_type.id }}">{{ incident_type.name }}</option>
+                                        {% endif %}
+                                    {% endfor %}
+                                </optgroup>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Bullying Type (conditional) -->
+                    <div id="bullying-type-div" class="group" style="display: none;">
+                        <label class="block text-xs font-semibold text-gray-700 mb-0.5">
+                            Bullying Type <span class="text-red-500">*</span>
+                        </label>
+                        <select name="bullying_type" id="id_bullying_type" class="w-full px-2.5 py-1.5 text-sm border-2 border-gray-200 rounded-xl focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 transition-all outline-none">
+                            <option value="">Select Bullying Type</option>
+                            <option value="Physical">Physical Bullying</option>
+                            <option value="Psychological">Psychological Bullying</option>
+                            <option value="Sexual">Sexual Bullying</option>
+                            <option value="Emotional">Emotional Bullying</option>
+                            <option value="Cyber">Cyber Bullying</option>
+                            <option value="Social">Social Bullying</option>
+                            <option value="Gender-based">Gender-based Bullying</option>
+                        </select>
+                        <p class="text-xs text-gray-500 mt-0.5">
+                            <i class="fas fa-info-circle mr-1"></i>
+                            Please specify the type of bullying
+                        </p>
+                    </div>
+
+                    <!-- Legal References Display -->
+                    <div id="legal-references"
+                        class="p-2 bg-gradient-to-r from-blue-50 to-indigo-50 border-l-4 border-blue-500 rounded-lg"
+                        style="display: none;">
+                        <div class="flex items-start space-x-1.5">
+                            <i class="fas fa-balance-scale text-blue-600 text-xs mt-0.5"></i>
+                            <div>
+                                <h3 class="font-bold text-blue-900 mb-1 text-xs">Legal References</h3>
+                                <div id="legal-references-content" class="text-xs text-blue-800"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="group">
+                        <label class="block text-xs font-semibold text-gray-700 mb-0.5">Description</label>
+                        {{ form.description }}
+                    </div>
+                    <div class="group">
+                        <label class="block text-xs font-semibold text-gray-700 mb-0.5">Evidence (Optional)</label>
+                        {{ form.evidence }}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Submit Button -->
+            <div class="flex items-center justify-between pt-3 border-t border-gray-200">
+                <p class="text-xs text-gray-600 flex items-center">
+                    <i class="fas fa-lock mr-1 text-emerald-600"></i>
+                    Confidential & Recorded
+                </p>
+                <button type="submit" id="submit-btn"
+                    class="bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-bold px-5 py-2 rounded-xl shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-200 flex items-center space-x-2 text-sm disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none">
+                    <i class="fas fa-save"></i>
+                    <span id="submit-text">Record Direct Report</span>
+                    <span id="submit-loading" class="hidden">
+                        <i class="fas fa-spinner fa-spin mr-1"></i>
+                        Processing...
+                    </span>
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const curriculumSelect = document.getElementById('id_curriculum');
+        const gradeLevelSelect = document.getElementById('id_grade_level');
+        const sectionNameSelect = document.getElementById('id_section_name');
+        const teacherNameInput = document.getElementById('id_teacher_name');
+        const incidentTypeSelect = document.getElementById('id_incident_type');
+        const legalReferencesDiv = document.getElementById('legal-references');
+        const legalReferencesContent = document.getElementById('legal-references-content');
+
+        // Incident type data with legal references
+        const incidentTypes = {
+        {% for incident_type in incident_types %}
+        '{{ incident_type.id }}': {
+            'name': '{{ incident_type.name|escapejs }}',
+                'legal_references': '{{ incident_type.legal_references|escapejs }}'
+        },
+        {% endfor %}
+    };
+
+    // Show legal references and bullying type when incident type is selected
+    if (incidentTypeSelect) {
+        incidentTypeSelect.addEventListener('change', function () {
+            const selectedId = this.value;
+            const bullyingTypeDiv = document.getElementById('bullying-type-div');
+            const bullyingTypeSelect = document.getElementById('id_bullying_type');
+            
+            if (selectedId && incidentTypes[selectedId]) {
+                const incidentName = incidentTypes[selectedId].name.toLowerCase();
+                
+                // Show legal references
+                if (legalReferencesContent) {
+                    legalReferencesContent.innerHTML = incidentTypes[selectedId].legal_references;
+                }
+                if (legalReferencesDiv) {
+                    legalReferencesDiv.style.display = 'block';
+                }
+                
+                // Show bullying type dropdown if "bullying" is in the incident name
+                if (incidentName.includes('bullying')) {
+                    if (bullyingTypeDiv) {
+                        bullyingTypeDiv.style.display = 'block';
+                    }
+                    if (bullyingTypeSelect) {
+                        bullyingTypeSelect.required = true;
+                    }
+                } else {
+                    if (bullyingTypeDiv) {
+                        bullyingTypeDiv.style.display = 'none';
+                    }
+                    if (bullyingTypeSelect) {
+                        bullyingTypeSelect.required = false;
+                        bullyingTypeSelect.value = '';
+                    }
+                }
+            } else {
+                if (legalReferencesDiv) {
+                    legalReferencesDiv.style.display = 'none';
+                }
+                if (bullyingTypeDiv) {
+                    bullyingTypeDiv.style.display = 'none';
+                }
+                if (bullyingTypeSelect) {
+                    bullyingTypeSelect.required = false;
+                    bullyingTypeSelect.value = '';
+                }
+            }
+        });
+    }
+
+    // Load section structure from Academic Structure (admin-managed) via AJAX
+    const trackSelect = document.getElementById('id_track');
+
+    // Initialize dropdowns with empty options
+    if (trackSelect) trackSelect.innerHTML = '<option value="">Select Track</option>';
+    gradeLevelSelect.innerHTML = '<option value="">Select Grade Level</option>';
+    sectionNameSelect.innerHTML = '<option value="">Select Section</option>';
+
+    // Update tracks when curriculum is selected
+    curriculumSelect.addEventListener('change', function () {
+        const curriculumId = this.value;
+        if (trackSelect) trackSelect.innerHTML = '<option value="">Loading...</option>';
+        gradeLevelSelect.innerHTML = '<option value="">Select Grade Level</option>';
+        sectionNameSelect.innerHTML = '<option value="">Select Section</option>';
+        teacherNameInput.value = '';
+
+        if (curriculumId) {
+            // Fetch tracks for this curriculum
+            fetch(`/api/tracks/?curriculum_id=${curriculumId}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (trackSelect) {
+                        trackSelect.innerHTML = '<option value="">Select Track</option>';
+                        
+                        if (data.tracks && data.tracks.length > 0) {
+                            data.tracks.forEach(track => {
+                                const option = document.createElement('option');
+                                option.value = track.id;
+                                option.text = track.name;
+                                trackSelect.appendChild(option);
+                            });
+                        }
+                    }
+                })
+                .catch(error => {
+                    console.error('Error fetching tracks:', error);
+                    if (trackSelect) trackSelect.innerHTML = '<option value="">Error loading tracks</option>';
+                });
+        }
+    });
+
+    // Update grades when track is selected
+    if (trackSelect) {
+        trackSelect.addEventListener('change', function () {
+            const trackId = this.value;
+            gradeLevelSelect.innerHTML = '<option value="">Loading...</option>';
+            sectionNameSelect.innerHTML = '<option value="">Select Section</option>';
+            teacherNameInput.value = '';
+
+            if (trackId) {
+                // Fetch grades for this track
+                fetch(`/api/grades/?track_id=${trackId}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        gradeLevelSelect.innerHTML = '<option value="">Select Grade Level</option>';
+                        
+                        if (data.grades && data.grades.length > 0) {
+                            // Sort grades numerically
+                            const sortedGrades = data.grades.sort((a, b) => parseInt(a.level) - parseInt(b.level));
+                            sortedGrades.forEach(grade => {
+                                const option = document.createElement('option');
+                                option.value = grade.level;
+                                option.text = `Grade ${grade.level}`;
+                                option.dataset.gradeId = grade.id;
+                                gradeLevelSelect.appendChild(option);
+                            });
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error fetching grades:', error);
+                        gradeLevelSelect.innerHTML = '<option value="">Error loading grades</option>';
+                    });
+            }
+        });
+    }
+
+    // Update sections when grade level is selected
+    gradeLevelSelect.addEventListener('change', function () {
+        const selectedGrade = this.value;
+        const selectedOption = this.options[this.selectedIndex];
+        const gradeId = selectedOption.dataset.gradeId;
+        
+        sectionNameSelect.innerHTML = '<option value="">Loading...</option>';
+        teacherNameInput.value = '';
+
+        if (gradeId) {
+            // Fetch sections for this grade
+            fetch(`/api/sections/?grade_id=${gradeId}`)
+                .then(response => response.json())
+                .then(data => {
+                    sectionNameSelect.innerHTML = '<option value="">Select Section</option>';
+                    
+                    if (data.sections && data.sections.length > 0) {
+                        data.sections.forEach(section => {
+                            const option = document.createElement('option');
+                            option.value = section.id;  // Use section ID for ModelChoiceField
+                            option.text = section.name;
+                            option.dataset.sectionId = section.id;
+                            option.dataset.adviserName = section.adviser_name || 'No adviser assigned';
+                            sectionNameSelect.appendChild(option);
+                        });
+                    }
+                })
+                .catch(error => {
+                    console.error('Error fetching sections:', error);
+                    sectionNameSelect.innerHTML = '<option value="">Error loading sections</option>';
+                });
+        }
+    });
+
+    // Update teacher when section is selected
+    sectionNameSelect.addEventListener('change', function () {
+        const selectedOption = this.options[this.selectedIndex];
+        const adviserName = selectedOption.dataset.adviserName;
+
+        if (adviserName && adviserName !== 'No adviser assigned') {
+            teacherNameInput.value = adviserName;
+        } else {
+            teacherNameInput.value = 'No adviser assigned';
+        }
+    });
+
+    // Toggle between student and teacher fields based on party type
+    const partyType = document.getElementById('partyType');
+    const studentFields = document.getElementById('studentFields');
+    const teacherFields = document.getElementById('teacherFields');
+    const teacherName = document.getElementById('teacherName');
+
+    if (partyType) {
+        partyType.addEventListener('change', function() {
+            if (this.value === 'student') {
+                if(studentFields) studentFields.style.display = 'block';
+                if(teacherFields) teacherFields.style.display = 'none';
+                if(teacherName) teacherName.removeAttribute('required');
+            } else if (this.value === 'teacher') {
+                if(studentFields) studentFields.style.display = 'none';
+                if(teacherFields) teacherFields.style.display = 'block';
+                if(teacherName) teacherName.setAttribute('required', 'required');
+            } else {
+                if(studentFields) studentFields.style.display = 'none';
+                if(teacherFields) teacherFields.style.display = 'none';
+            }
+        });
+    }
+    
+    // Prevent double submission and add debugging
+    function handleFormSubmit(event) {
+        const submitBtn = document.getElementById('submit-btn');
+        const submitText = document.getElementById('submit-text');
+        const submitLoading = document.getElementById('submit-loading');
+        
+        // Debug: Log form values before submission
+        const curriculumValue = document.getElementById('id_curriculum').value;
+        const trackValue = document.getElementById('id_track') ? document.getElementById('id_track').value : 'N/A';
+        const gradeValue = document.getElementById('id_grade_level').value;
+        const sectionValue = document.getElementById('id_section_name').value;
+        
+        console.log('Form submission debug:', {
+            curriculum: curriculumValue,
+            track: trackValue,
+            grade: gradeValue,
+            section: sectionValue
+        });
+        
+        // Disable button and show loading state
+        if (submitBtn && !submitBtn.disabled) {
+            submitBtn.disabled = true;
+            if (submitText) submitText.classList.add('hidden');
+            if (submitLoading) submitLoading.classList.remove('hidden');
+            submitBtn.classList.add('opacity-50', 'cursor-not-allowed');
+            submitBtn.classList.remove('hover:from-emerald-700', 'hover:to-teal-700', 'hover:shadow-xl', 'hover:-translate-y-0.5');
+        }
+        
+        // Form will continue to submit normally
+        return true;
+    }
+    
+    // Also prevent double-click on submit button
+    const submitBtn = document.getElementById('submit-btn');
+    if (submitBtn) {
+        let isSubmitting = false;
+        submitBtn.addEventListener('click', function(e) {
+            if (isSubmitting) {
+                e.preventDefault();
+                e.stopPropagation();
+                return false;
+            }
+            isSubmitting = true;
+        });
+    }
+});
+</script>
+
+{% endblock %}

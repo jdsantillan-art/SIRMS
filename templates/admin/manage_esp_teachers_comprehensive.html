@@ -1,0 +1,1179 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}ESP Teacher / VRF Maintenance - SIRMS{% endblock %}
+
+{% block content %}
+<!-- Define editESPTeacher function FIRST before any other scripts -->
+<script>
+// CRITICAL: Define editESPTeacher function IMMEDIATELY - must be available before page renders
+(function() {
+    'use strict';
+    
+    window.editESPTeacher = function(id, name, email, phone, specialization, isActive) {
+        console.log('=== editESPTeacher CALLED ===');
+        console.log('ID:', id, 'Name:', name);
+        
+        try {
+            const modal = document.getElementById('editModal');
+            console.log('Modal found:', !!modal);
+            
+            if (!modal) {
+                alert('ERROR: Edit modal not found in page. Please refresh.');
+                return false;
+            }
+            
+            // Get form fields
+            const fields = {
+                id: document.getElementById('edit_esp_teacher_id'),
+                name: document.getElementById('edit_name'),
+                email: document.getElementById('edit_email'),
+                phone: document.getElementById('edit_phone'),
+                specialization: document.getElementById('edit_specialization'),
+                isActive: document.getElementById('edit_is_active')
+            };
+            
+            console.log('Fields found:', Object.keys(fields).map(k => ({key: k, found: !!fields[k]})));
+            
+            // Check if all fields exist
+            const missingFields = Object.keys(fields).filter(k => !fields[k]);
+            if (missingFields.length > 0) {
+                console.error('Missing fields:', missingFields);
+                alert('ERROR: Form fields not found: ' + missingFields.join(', '));
+                return false;
+            }
+            
+            // Populate fields
+            fields.id.value = id || '';
+            fields.name.value = (name || '').replace(/^["']|["']$/g, '');
+            fields.email.value = (email || '').replace(/^["']|["']$/g, '');
+            fields.phone.value = (phone || '').replace(/^["']|["']$/g, '');
+            fields.specialization.value = (specialization || '').replace(/^["']|["']$/g, '');
+            fields.isActive.checked = isActive === 'true' || isActive === true || isActive === 1 || isActive === '1';
+            
+            console.log('Fields populated');
+            
+            // Show modal - CRITICAL: Must set both class and style
+            modal.classList.remove('hidden');
+            modal.style.display = 'flex';
+            modal.style.zIndex = '9999';
+            modal.style.position = 'fixed';
+            document.body.style.overflow = 'hidden';
+            
+            console.log('Modal display set to:', modal.style.display);
+            console.log('Modal classes:', modal.className);
+            
+            // Force visibility
+            setTimeout(function() {
+                if (modal.style.display !== 'flex') {
+                    modal.style.display = 'flex';
+                    modal.style.visibility = 'visible';
+                    modal.style.opacity = '1';
+                }
+                console.log('Modal visibility check - display:', modal.style.display);
+            }, 50);
+            
+            return false;
+        } catch (error) {
+            console.error('ERROR in editESPTeacher:', error);
+            alert('ERROR: ' + error.message);
+            return false;
+        }
+    };
+    
+    window.closeEditModal = function() {
+        console.log('=== closeEditModal CALLED ===');
+        const modal = document.getElementById('editModal');
+        if (modal) {
+            modal.classList.add('hidden');
+            modal.style.display = 'none';
+            document.body.style.overflow = '';
+        }
+        return false;
+    };
+    
+    console.log('editESPTeacher function defined:', typeof window.editESPTeacher);
+})();
+</script>
+
+<script>
+// Define functions IMMEDIATELY before page renders - this ensures they're available for onclick handlers
+(function() {
+    'use strict';
+    
+    // Open Add Account Modal
+    window.openAddAccountModal = function() {
+        console.log('Opening Add Account Modal...');
+        try {
+            const modal = document.getElementById('addAccountModal');
+            if (modal) {
+                modal.classList.remove('hidden');
+                modal.style.display = 'flex';
+                modal.style.zIndex = '9999';
+                document.body.style.overflow = 'hidden';
+                setTimeout(() => {
+                    const firstInput = modal.querySelector('input[type="text"], input[type="email"]');
+                    if (firstInput) firstInput.focus();
+                }, 100);
+            } else {
+                alert('Error: Modal not found. Please refresh the page.');
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            alert('Error: ' + error.message);
+        }
+    };
+    
+    // Close Add Account Modal
+    window.closeAddAccountModal = function() {
+        const modal = document.getElementById('addAccountModal');
+        if (modal) {
+            modal.classList.add('hidden');
+            modal.style.display = 'none';
+            document.body.style.overflow = '';
+            const form = document.getElementById('addAccountForm');
+            if (form) form.reset();
+        }
+    };
+    
+    // Generate ESP Teacher Accounts
+    window.generateESPTeacherAccounts = async function(event) {
+        console.log('Generate Accounts clicked');
+        if (!confirm('Generate ESP teacher accounts from all active ESP teacher records? Accounts will be created with system-generated usernames and temporary passwords.')) {
+            return;
+        }
+        
+        const button = event ? event.target.closest('button') : document.getElementById('generateAccountsBtn');
+        const originalText = button ? button.innerHTML : '';
+        if (button) {
+            button.disabled = true;
+            button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generating...';
+        }
+        
+        try {
+            const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]')?.value || 
+                            document.cookie.match(/csrftoken=([^;]+)/)?.[1];
+            
+            if (!csrftoken) {
+                alert('Error: CSRF token not found. Please refresh the page.');
+                if (button) {
+                    button.disabled = false;
+                    button.innerHTML = originalText;
+                }
+                return;
+            }
+            
+            const response = await fetch('{% url "generate_esp_teacher_accounts" %}', {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': csrftoken,
+                    'Content-Type': 'application/json',
+                },
+            });
+            
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                let msg = `Successfully generated ${data.created_count} accounts!\n\n`;
+                if (data.created_accounts?.length > 0) {
+                    msg += 'Created Accounts:\n';
+                    data.created_accounts.forEach((acc, idx) => {
+                        msg += `${idx + 1}. ${acc.username} / ${acc.password} - ${acc.name}\n`;
+                        if (acc.id && acc.password) {
+                            sessionStorage.setItem(`esp_teacher_password_${acc.id}`, JSON.stringify({
+                                password: acc.password,
+                                timestamp: new Date().toISOString()
+                            }));
+                        }
+                    });
+                }
+                alert(msg);
+                window.location.reload();
+            } else {
+                alert('Error: ' + (data.error || 'Failed to generate accounts'));
+                if (button) {
+                    button.disabled = false;
+                    button.innerHTML = originalText;
+                }
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            alert('Error: ' + error.message);
+            if (button) {
+                button.disabled = false;
+                button.innerHTML = originalText;
+            }
+        }
+    };
+    
+    // Get Cookie helper function
+    window.getCookie = function(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    };
+    
+    // Handle Add Account Form Submission
+    window.handleAddAccountSubmit = async function(event) {
+        event.preventDefault();
+        event.stopPropagation();
+        
+        console.log('Form submission started');
+        
+        const form = event.target;
+        if (!form) {
+            console.error('Form not found');
+            alert('Error: Form not found. Please refresh the page.');
+            return false;
+        }
+        
+        // Get CSRF token from form or cookie
+        const csrfInput = form.querySelector('[name=csrfmiddlewaretoken]');
+        const csrftoken = csrfInput ? csrfInput.value : window.getCookie('csrftoken');
+        
+        console.log('CSRF token found:', !!csrftoken);
+        
+        if (!csrftoken) {
+            alert('Error: CSRF token not found. Please refresh the page.');
+            return false;
+        }
+        
+        // Show loading state
+        const submitButton = form.querySelector('button[type="submit"]');
+        const originalText = submitButton ? submitButton.innerHTML : '';
+        if (submitButton) {
+            submitButton.disabled = true;
+            submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Creating...';
+        }
+        
+        try {
+            const formData = new FormData(form);
+            console.log('Form data:', Object.fromEntries(formData));
+            
+            const response = await fetch('{% url "add_esp_teacher_account" %}', {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': csrftoken,
+                },
+                body: formData
+            });
+            
+            console.log('Response status:', response.status);
+            
+            if (!response.ok) {
+                const errorText = await response.text();
+                console.error('Error response:', errorText);
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            
+            const data = await response.json();
+            console.log('Response data:', data);
+            
+            if (data.success) {
+                // Store password in sessionStorage for display
+                if (data.user_id && data.password) {
+                    sessionStorage.setItem(`esp_teacher_password_${data.user_id}`, JSON.stringify({
+                        password: data.password,
+                        timestamp: new Date().toISOString()
+                    }));
+                }
+                
+                let message = `✅ ${data.message}\n\n`;
+                message += `Account Details:\n`;
+                message += `Username: ${data.username}\n`;
+                message += `Password: ${data.password}\n`;
+                message += `Email: ${data.email}\n\n`;
+                message += `⚠️ Please save these credentials. The password must be changed on first login.`;
+                
+                alert(message);
+                
+                // Close modal and reload page
+                window.closeAddAccountModal();
+                window.location.reload();
+            } else {
+                alert('Error: ' + (data.error || 'Failed to create account'));
+                if (submitButton) {
+                    submitButton.disabled = false;
+                    submitButton.innerHTML = originalText;
+                }
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            alert('An error occurred while creating the account: ' + error.message + '\n\nPlease check the console (F12) for more details.');
+            if (submitButton) {
+                submitButton.disabled = false;
+                submitButton.innerHTML = originalText;
+            }
+        }
+        
+        return false;
+    };
+    
+    console.log('Functions defined at page top');
+})();
+</script>
+
+<div class="max-w-7xl mx-auto px-4 py-8">
+    <div class="mb-6 flex justify-between items-center">
+        <div>
+            <h1 class="text-4xl font-bold text-emerald-700 mb-2">👨‍🏫 ESP Teacher / VRF Maintenance</h1>
+            <p class="text-gray-600">Manage ESP teachers and generate accounts</p>
+        </div>
+        <div class="flex space-x-2">
+            <button id="generateAccountsBtn" type="button" onclick="generateESPTeacherAccounts(event)" class="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 rounded-md flex items-center space-x-1.5 transition-colors cursor-pointer text-sm">
+                <i class="fas fa-user-plus text-xs"></i>
+                <span>Generate Accounts</span>
+            </button>
+            <button id="addAccountBtn" type="button" onclick="openAddAccountModal()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1.5 rounded-md flex items-center space-x-1.5 transition-colors cursor-pointer text-sm">
+                <i class="fas fa-user-plus text-xs"></i>
+                <span>Add ESP Teacher Account</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Search and Filters -->
+    <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+        <form method="GET" class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <input type="text" name="search" value="{{ search_query }}" placeholder="Search by name, email, or username..." 
+                   class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent">
+            <select name="status" class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500">
+                <option value="">All Status</option>
+                <option value="active" {% if status_filter == 'active' %}selected{% endif %}>Active</option>
+                <option value="inactive" {% if status_filter == 'inactive' %}selected{% endif %}>Inactive</option>
+            </select>
+            <button type="submit" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg">
+                <i class="fas fa-search"></i> Filter
+            </button>
+        </form>
+    </div>
+
+    <!-- Statistics -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm text-gray-600">Total ESP Teachers</p>
+                    <p class="text-3xl font-bold text-emerald-600">{{ esp_count }} / {{ max_teachers }}</p>
+                </div>
+                <div class="bg-emerald-100 p-3 rounded-lg">
+                    <i class="fas fa-user-tie text-2xl text-emerald-600"></i>
+                </div>
+            </div>
+        </div>
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm text-gray-600">User Accounts</p>
+                    <p class="text-3xl font-bold text-blue-600">{{ esp_user_accounts.count }}</p>
+                </div>
+                <div class="bg-blue-100 p-3 rounded-lg">
+                    <i class="fas fa-users text-2xl text-blue-600"></i>
+                </div>
+            </div>
+        </div>
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm text-gray-600">Active</p>
+                    <p class="text-3xl font-bold text-green-600">{{ active_count|default:0 }}</p>
+                </div>
+                <div class="bg-green-100 p-3 rounded-lg">
+                    <i class="fas fa-check-circle text-2xl text-green-600"></i>
+                </div>
+            </div>
+        </div>
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm text-gray-600">Status</p>
+                    <p class="text-lg font-bold text-green-600">
+                        Available
+                    </p>
+                </div>
+                <div class="bg-green-100 p-3 rounded-lg">
+                    <i class="fas fa-check-circle text-2xl text-green-600"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ESP Teachers Table (Combined View) -->
+    <div class="bg-white rounded-lg shadow-md overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-emerald-50">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Name</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Email</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Phone</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Username</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Password</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Specialization</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Status</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    {% for teacher in esp_teachers %}
+                    {% with account=teacher.user_account %}
+                    <tr class="hover:bg-gray-50">
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="text-sm font-medium text-gray-900">{{ teacher.name }}</div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ teacher.email|default:"Not provided" }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ teacher.phone|default:"Not provided" }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            {% if account %}
+                                {{ account.username }}
+                            {% else %}
+                                <span class="text-gray-400 italic">No account</span>
+                            {% endif %}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            {% if account %}
+                                <span class="password-display" data-teacher-id="{{ account.id }}" data-must-change="{{ account.must_change_password|yesno:'true,false' }}">
+                                    {% if account.must_change_password %}
+                                        <span class="text-gray-400">Loading...</span>
+                                    {% else %}
+                                        <span class="text-green-600 italic flex items-center space-x-1">
+                                            <i class="fas fa-lock text-xs"></i>
+                                            <span>Changed by teacher</span>
+                                        </span>
+                                    {% endif %}
+                                </span>
+                            {% else %}
+                                <span class="text-gray-400 italic">No account</span>
+                            {% endif %}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ teacher.specialization|default:"General" }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            {% if teacher.is_active %}
+                            <span class="px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">Active</span>
+                            {% else %}
+                            <span class="px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800">Inactive</span>
+                            {% endif %}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                            <button type="button" 
+                                    onclick="console.log('Edit button clicked!'); if(typeof window.editESPTeacher === 'function') { window.editESPTeacher({{ teacher.id }}, '{{ teacher.name|escapejs }}', '{{ teacher.email|default:""|escapejs }}', '{{ teacher.phone|default:""|escapejs }}', '{{ teacher.specialization|default:""|escapejs }}', {{ teacher.is_active|yesno:'true,false' }}); } else { alert('Edit function not loaded. Please refresh the page.'); } return false;" 
+                                    class="text-blue-600 hover:text-blue-900 mr-3 edit-btn"
+                                    data-teacher-id="{{ teacher.id }}">
+                                <i class="fas fa-edit"></i> Edit
+                            </button>
+                            {% if teacher.is_active %}
+                            <a href="{% url 'delete_esp_teacher' teacher.id %}" onclick="return confirm('Are you sure you want to deactivate {{ teacher.name }}?')" class="text-red-600 hover:text-red-900">
+                                <i class="fas fa-trash"></i> Deactivate
+                            </a>
+                            {% else %}
+                            <span class="text-gray-400">Deactivated</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endwith %}
+                    {% empty %}
+                    <tr>
+                        <td colspan="8" class="px-6 py-4 text-center text-gray-500">No ESP teachers found</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination -->
+        {% if esp_teachers.has_other_pages %}
+        <div class="bg-gray-50 px-4 py-3 flex items-center justify-between border-t border-gray-200">
+            <div class="flex-1 flex justify-between sm:hidden">
+                {% if esp_teachers.has_previous %}
+                <a href="?page={{ esp_teachers.previous_page_number }}" class="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">Previous</a>
+                {% endif %}
+                {% if esp_teachers.has_next %}
+                <a href="?page={{ esp_teachers.next_page_number }}" class="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">Next</a>
+                {% endif %}
+            </div>
+            <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+                <div>
+                    <p class="text-sm text-gray-700">
+                        Showing <span class="font-medium">{{ esp_teachers.start_index }}</span> to <span class="font-medium">{{ esp_teachers.end_index }}</span> of <span class="font-medium">{{ esp_teachers.paginator.count }}</span> results
+                    </p>
+                </div>
+                <div>
+                    <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px">
+                        {% if esp_teachers.has_previous %}
+                        <a href="?page={{ esp_teachers.previous_page_number }}" class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">Previous</a>
+                        {% endif %}
+                        <span class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700">Page {{ esp_teachers.number }} of {{ esp_teachers.paginator.num_pages }}</span>
+                        {% if esp_teachers.has_next %}
+                        <a href="?page={{ esp_teachers.next_page_number }}" class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">Next</a>
+                        {% endif %}
+                    </nav>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Add ESP Teacher Account Modal (Creates both Counselor record and User account) -->
+<div id="addAccountModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden overflow-y-auto h-full w-full z-50" style="display: none;">
+    <div class="flex items-center justify-center min-h-screen p-4">
+        <div class="relative bg-white rounded-lg shadow-xl w-full max-w-md p-6">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-bold text-gray-900">Add ESP Teacher Account</h3>
+                <button onclick="closeAddAccountModal()" class="text-gray-400 hover:text-gray-600">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <form id="addAccountForm" onsubmit="return handleAddAccountSubmit(event);">
+                {% csrf_token %}
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Name <span class="text-red-500">*</span></label>
+                        <input type="text" name="name" id="account_name" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" placeholder="Full Name">
+                        <p class="text-xs text-gray-500 mt-1">First name and last name required</p>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Email <span class="text-red-500">*</span></label>
+                        <input type="email" name="email" id="account_email" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" placeholder="email@example.com">
+                        <p class="text-xs text-gray-500 mt-1">Will be used for login</p>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Phone <span class="text-red-500">*</span></label>
+                        <input type="text" name="phone" id="account_phone" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" placeholder="09XX XXX XXXX">
+                        <p class="text-xs text-gray-500 mt-1">Format: 09XX XXX XXXX (11 digits)</p>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Specialization</label>
+                        <input type="text" name="specialization" id="account_specialization" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" placeholder="e.g., Values Education, Behavioral Counseling">
+                    </div>
+                    <div class="bg-blue-50 border-l-4 border-blue-400 p-3 rounded">
+                        <p class="text-xs text-blue-700">
+                            <i class="fas fa-info-circle mr-1"></i>
+                            This will create both the ESP Teacher record and a user account with auto-generated username and password.
+                        </p>
+                    </div>
+                    <div class="flex gap-3 pt-4">
+                        <button type="submit" class="flex-1 bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700">
+                            Create Account
+                        </button>
+                        <button type="button" onclick="closeAddAccountModal()" class="flex-1 bg-gray-200 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-300">
+                            Cancel
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Edit ESP Teacher Modal -->
+<div id="editModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden z-50" style="display: none !important;">
+    <div class="flex items-center justify-center min-h-screen p-4" onclick="if(event.target === this) window.closeEditModal();">
+        <div class="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-screen overflow-y-auto" onclick="event.stopPropagation();">
+            <div class="p-6">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-2xl font-bold text-gray-800">
+                        <i class="fas fa-edit text-emerald-600"></i> Edit ESP Teacher
+                    </h3>
+                    <button type="button" onclick="window.closeEditModal()" class="text-gray-400 hover:text-gray-600">
+                        <i class="fas fa-times text-2xl"></i>
+                    </button>
+                </div>
+                <form id="editESPTeacherForm" onsubmit="return window.submitEditESPTeacher(event)">
+                    {% csrf_token %}
+                    <input type="hidden" id="edit_esp_teacher_id" name="teacher_id">
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Name <span class="text-red-500">*</span></label>
+                            <input type="text" id="edit_name" name="name" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Email <span class="text-red-500">*</span></label>
+                            <input type="email" id="edit_email" name="email" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500" placeholder="email@example.com">
+                            <p class="text-xs text-gray-500 mt-1">Will be used for login</p>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Phone <span class="text-red-500">*</span></label>
+                            <input type="text" id="edit_phone" name="phone" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500" placeholder="09XX XXX XXXX">
+                            <p class="text-xs text-gray-500 mt-1">Format: 09XX XXX XXXX (11 digits)</p>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Specialization</label>
+                            <input type="text" id="edit_specialization" name="specialization" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500" placeholder="e.g., Values Education, Behavioral Counseling">
+                        </div>
+                        <div>
+                            <label class="flex items-center space-x-2">
+                                <input type="checkbox" id="edit_is_active" name="is_active" class="rounded border-gray-300 text-emerald-600 focus:ring-emerald-500">
+                                <span class="text-sm font-medium text-gray-700">Active Account</span>
+                            </label>
+                        </div>
+                    </div>
+                    <div class="mt-6 flex justify-end space-x-3">
+                        <button type="button" onclick="window.closeEditModal()" class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">Cancel</button>
+                        <button type="submit" class="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700">
+                            <i class="fas fa-save mr-1"></i> Save Changes
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Define edit functions IMMEDIATELY at the top so they're available for onclick handlers
+// This must be defined BEFORE the page loads to ensure onclick handlers can access it
+window.editESPTeacher = function(id, name, email, phone, specialization, isActive) {
+    console.log('=== editESPTeacher CALLED ===');
+    console.log('ID:', id, 'Name:', name);
+    
+    try {
+        const modal = document.getElementById('editModal');
+        console.log('Modal element:', modal);
+        
+        if (!modal) {
+            alert('ERROR: Edit modal not found. Please refresh the page.');
+            return false;
+        }
+        
+        // Get all form fields
+        const teacherIdField = document.getElementById('edit_esp_teacher_id');
+        const nameField = document.getElementById('edit_name');
+        const emailField = document.getElementById('edit_email');
+        const phoneField = document.getElementById('edit_phone');
+        const specializationField = document.getElementById('edit_specialization');
+        const isActiveField = document.getElementById('edit_is_active');
+        
+        console.log('Fields check:', {
+            teacherId: !!teacherIdField,
+            name: !!nameField,
+            email: !!emailField,
+            phone: !!phoneField,
+            specialization: !!specializationField,
+            isActive: !!isActiveField
+        });
+        
+        if (!teacherIdField || !nameField || !emailField || !phoneField || !specializationField || !isActiveField) {
+            alert('ERROR: Some form fields are missing. Please refresh the page.');
+            return false;
+        }
+        
+        // Clean and populate fields
+        teacherIdField.value = String(id || '').trim();
+        nameField.value = String(name || '').replace(/^["']|["']$/g, '').trim();
+        emailField.value = String(email || '').replace(/^["']|["']$/g, '').trim();
+        phoneField.value = String(phone || '').replace(/^["']|["']$/g, '').trim();
+        specializationField.value = String(specialization || '').replace(/^["']|["']$/g, '').trim();
+        isActiveField.checked = isActive === 'true' || isActive === true || isActive === 1 || isActive === '1';
+        
+        console.log('Fields populated successfully');
+        
+        // CRITICAL: Show modal - must override inline styles
+        modal.classList.remove('hidden');
+        modal.style.display = 'flex';
+        modal.style.visibility = 'visible';
+        modal.style.opacity = '1';
+        modal.style.zIndex = '9999';
+        document.body.style.overflow = 'hidden';
+        
+        console.log('Modal display:', modal.style.display);
+        console.log('Modal classes:', modal.className);
+        
+        // Double-check visibility after a short delay
+        setTimeout(function() {
+            if (modal.style.display !== 'flex') {
+                console.warn('Modal not visible, forcing display');
+                modal.style.display = 'flex';
+                modal.style.visibility = 'visible';
+            }
+            const firstInput = modal.querySelector('input[type="text"], input[type="email"]');
+            if (firstInput) {
+                firstInput.focus();
+            }
+        }, 100);
+        
+        return false;
+    } catch (error) {
+        console.error('ERROR in editESPTeacher:', error);
+        alert('ERROR: ' + error.message);
+        return false;
+    }
+};
+
+window.closeEditModal = function() {
+    console.log('=== closeEditModal called ===');
+    const modal = document.getElementById('editModal');
+    if (modal) {
+        modal.classList.add('hidden');
+        modal.style.display = 'none';
+        document.body.style.overflow = '';
+        const form = document.getElementById('editESPTeacherForm');
+        if (form) form.reset();
+        console.log('Modal closed');
+    } else {
+        console.error('Modal not found for closing');
+    }
+    return false;
+};
+
+// Define functions immediately so they're available for onclick handlers
+(function() {
+    'use strict';
+    
+    // Make functions globally available immediately
+    window.openAddAccountModal = function() {
+        console.log('Opening Add Account Modal...');
+        try {
+            const modal = document.getElementById('addAccountModal');
+            console.log('Modal element:', modal);
+            if (modal) {
+                // Remove hidden class and show modal
+                modal.classList.remove('hidden');
+                modal.style.display = 'flex';
+                modal.style.zIndex = '9999';
+                document.body.style.overflow = 'hidden'; // Prevent background scrolling
+                console.log('Modal should be visible now');
+                // Focus on first input
+                setTimeout(() => {
+                    const firstInput = modal.querySelector('input[type="text"], input[type="email"]');
+                    if (firstInput) {
+                        firstInput.focus();
+                    }
+                }, 100);
+            } else {
+                console.error('Add Account Modal not found in DOM');
+                alert('Error: Modal not found. Please refresh the page and try again.');
+            }
+        } catch (error) {
+            console.error('Error opening modal:', error);
+            alert('Error opening modal: ' + error.message);
+        }
+    };
+
+    window.closeAddAccountModal = function() {
+        const modal = document.getElementById('addAccountModal');
+        if (modal) {
+            modal.classList.add('hidden');
+            modal.style.display = 'none';
+            document.body.style.overflow = ''; // Restore scrolling
+            // Reset form
+            const form = document.getElementById('addAccountForm');
+            if (form) {
+                form.reset();
+            }
+        }
+    };
+    
+    console.log('Functions defined:', typeof window.openAddAccountModal, typeof window.closeAddAccountModal);
+})();
+
+// Close modal when clicking outside and ensure buttons work
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('DOM Content Loaded - Setting up ESP Teacher Management');
+    
+    // Setup Add Account Modal
+    const addModal = document.getElementById('addAccountModal');
+    if (addModal) {
+        addModal.addEventListener('click', function(e) {
+            if (e.target === addModal) {
+                window.closeAddAccountModal();
+            }
+        });
+    } else {
+        console.warn('Add Account Modal not found in DOM');
+    }
+    
+    // Setup Edit Modal - click outside to close
+    const editModal = document.getElementById('editModal');
+    if (editModal) {
+        editModal.addEventListener('click', function(e) {
+            if (e.target === editModal) {
+                window.closeEditModal();
+            }
+        });
+        console.log('Edit modal click handler attached');
+    } else {
+        console.warn('Edit Modal not found in DOM');
+    }
+    
+    // Verify edit functions are available
+    console.log('Edit functions available:', typeof window.editESPTeacher, typeof window.closeEditModal);
+    
+    // Add direct event listeners to Edit buttons - extract from onclick attribute
+    document.querySelectorAll('.edit-btn').forEach(button => {
+        const onclickAttr = button.getAttribute('onclick');
+        if (onclickAttr) {
+            // Extract the parameters from the onclick string
+            const match = onclickAttr.match(/window\.editESPTeacher\(([^)]+)\)/);
+            if (match) {
+                const paramsStr = match[1];
+                // Parse parameters (handling escaped quotes)
+                const params = [];
+                let current = '';
+                let inQuotes = false;
+                let quoteChar = '';
+                
+                for (let i = 0; i < paramsStr.length; i++) {
+                    const char = paramsStr[i];
+                    if ((char === '"' || char === "'") && paramsStr[i-1] !== '\\') {
+                        if (!inQuotes) {
+                            inQuotes = true;
+                            quoteChar = char;
+                        } else if (char === quoteChar) {
+                            inQuotes = false;
+                            quoteChar = '';
+                        }
+                        current += char;
+                    } else if (char === ',' && !inQuotes) {
+                        params.push(current.trim());
+                        current = '';
+                    } else {
+                        current += char;
+                    }
+                }
+                if (current.trim()) params.push(current.trim());
+                
+                if (params.length >= 6) {
+                    button.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        console.log('Edit button clicked via event listener');
+                        
+                        // Clean parameters
+                        const id = params[0].trim();
+                        const name = params[1].replace(/^["']|["']$/g, '').trim();
+                        const email = params[2].replace(/^["']|["']$/g, '').trim();
+                        const phone = params[3].replace(/^["']|["']$/g, '').trim();
+                        const specialization = params[4].replace(/^["']|["']$/g, '').trim();
+                        const isActive = params[5].trim() === 'true';
+                        
+                        console.log('Calling editESPTeacher with:', {id, name, email, phone, specialization, isActive});
+                        
+                        if (window.editESPTeacher) {
+                            window.editESPTeacher(id, name, email, phone, specialization, isActive);
+                        } else {
+                            console.error('editESPTeacher function not available');
+                            alert('Error: Edit function not loaded. Please refresh the page.');
+                        }
+                        
+                        return false;
+                    }, true); // Use capture phase
+                }
+            }
+        }
+    });
+    
+    console.log('Edit button event listeners attached:', document.querySelectorAll('.edit-btn').length);
+    console.log('editESPTeacher function available:', typeof window.editESPTeacher);
+    
+    // Functions are already globally available, just verify
+    console.log('Functions available:', typeof window.openAddAccountModal, typeof window.closeAddAccountModal, typeof window.generateESPTeacherAccounts, typeof window.handleAddAccountSubmit);
+    
+    // Setup form submit handler as backup
+    const addAccountForm = document.getElementById('addAccountForm');
+    if (addAccountForm && typeof window.handleAddAccountSubmit === 'function') {
+        addAccountForm.addEventListener('submit', function(e) {
+            console.log('Form submit event triggered');
+            window.handleAddAccountSubmit(e);
+        });
+        console.log('Form submit event listener attached');
+    }
+    
+    // Setup click handlers as backup (in addition to onclick attributes)
+    const addAccountBtn = document.getElementById('addAccountBtn');
+    if (addAccountBtn) {
+        // Keep onclick attribute, but also add event listener as backup
+        addAccountBtn.addEventListener('click', function(e) {
+            if (typeof window.openAddAccountModal === 'function') {
+                e.preventDefault();
+                e.stopPropagation();
+                console.log('Add Account button clicked via event listener');
+                window.openAddAccountModal();
+            } else {
+                console.error('openAddAccountModal function not available');
+            }
+        });
+        console.log('Add Account button event listener attached');
+    } else {
+        console.warn('Add Account button not found');
+    }
+    
+    const generateBtn = document.getElementById('generateAccountsBtn');
+    if (generateBtn) {
+        // Keep onclick attribute, but also add event listener as backup
+        generateBtn.addEventListener('click', function(e) {
+            if (typeof window.generateESPTeacherAccounts === 'function') {
+                e.preventDefault();
+                e.stopPropagation();
+                console.log('Generate Accounts button clicked via event listener');
+                window.generateESPTeacherAccounts(e);
+            } else {
+                console.error('generateESPTeacherAccounts function not available');
+            }
+        });
+        console.log('Generate Accounts button event listener attached');
+    } else {
+        console.warn('Generate Accounts button not found');
+    }
+});
+
+// Handle Add Account Form Submission function is defined in the top script section
+
+// Get CSRF token helper function
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+
+window.submitEditESPTeacher = async function(event) {
+    event.preventDefault();
+    event.stopPropagation();
+    
+    const form = event.target;
+    if (!form) {
+        alert('Error: Form not found.');
+        return false;
+    }
+    
+    const formData = new FormData(form);
+    const csrftoken = getCookie('csrftoken') || document.querySelector('[name=csrfmiddlewaretoken]')?.value;
+    
+    if (!csrftoken) {
+        alert('Error: CSRF token not found. Please refresh the page.');
+        return false;
+    }
+    
+    // Show loading state
+    const submitButton = form.querySelector('button[type="submit"]');
+    const originalText = submitButton ? submitButton.innerHTML : '';
+    if (submitButton) {
+        submitButton.disabled = true;
+        submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+    }
+    
+    try {
+        const response = await fetch('{% url "edit_esp_teacher_comprehensive" %}', {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': csrftoken,
+            },
+            body: formData
+        });
+        
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error('Error response:', errorText);
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        console.log('Edit response:', data);
+        
+        if (data.success) {
+            alert('✅ ESP Teacher updated successfully!');
+            window.closeEditModal();
+            location.reload();
+        } else {
+            alert('Error: ' + (data.error || 'Failed to update ESP teacher'));
+            if (submitButton) {
+                submitButton.disabled = false;
+                submitButton.innerHTML = originalText;
+            }
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        alert('An error occurred while updating the ESP teacher: ' + error.message + '\n\nPlease check the console for more details.');
+        if (submitButton) {
+            submitButton.disabled = false;
+            submitButton.innerHTML = originalText;
+        }
+    }
+    
+    return false;
+};
+
+// Display passwords from sessionStorage on page load (similar to student/teacher management)
+document.addEventListener('DOMContentLoaded', function() {
+    const passwordDisplays = document.querySelectorAll('.password-display');
+    
+    passwordDisplays.forEach(function(display) {
+        const teacherId = display.getAttribute('data-teacher-id');
+        const mustChange = display.getAttribute('data-must-change') === 'true';
+        
+        if (teacherId && mustChange) {
+            const storedData = sessionStorage.getItem(`esp_teacher_password_${teacherId}`);
+            if (storedData) {
+                try {
+                    const passwordData = JSON.parse(storedData);
+                    display.innerHTML = `
+                        <div class="flex items-center space-x-2">
+                            <code class="px-2 py-1 bg-yellow-100 text-yellow-800 rounded font-mono text-xs">${passwordData.password}</code>
+                            <button onclick="copyPassword('${passwordData.password}')" class="text-blue-600 hover:text-blue-800" title="Copy password">
+                                <i class="fas fa-copy text-xs"></i>
+                            </button>
+                            <span class="text-xs text-gray-500">(Temporary - until changed)</span>
+                        </div>
+                    `;
+                } catch (e) {
+                    console.error('Error parsing stored password data:', e);
+                    display.innerHTML = '<span class="text-gray-400">N/A</span>';
+                }
+            } else {
+                display.innerHTML = '<span class="text-gray-400">Password not available</span>';
+            }
+        } else if (!mustChange) {
+            display.innerHTML = '<span class="text-green-600 italic">Changed by teacher</span>';
+        }
+    });
+});
+
+// Copy password to clipboard
+function copyPassword(password) {
+    if (navigator.clipboard) {
+        navigator.clipboard.writeText(password).then(() => {
+            alert('Password copied to clipboard!');
+        }).catch(() => {
+            const textArea = document.createElement('textarea');
+            textArea.value = password;
+            document.body.appendChild(textArea);
+            textArea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textArea);
+            alert('Password copied to clipboard!');
+        });
+    } else {
+        const textArea = document.createElement('textarea');
+        textArea.value = password;
+        document.body.appendChild(textArea);
+        textArea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textArea);
+        alert('Password copied to clipboard!');
+    }
+}
+
+// Generate ESP Teacher Accounts - Make globally available immediately
+window.generateESPTeacherAccounts = async function(event) {
+    console.log('Generate Accounts button clicked');
+    try {
+        if (!confirm('Generate ESP teacher accounts from all active ESP teacher records? Accounts will be created with system-generated usernames and temporary passwords. Teachers will be required to change their password on first login.')) {
+            return;
+        }
+    
+    // Get the button and show loading state
+    const button = event ? event.target.closest('button') : document.getElementById('generateAccountsBtn');
+    const originalText = button ? button.innerHTML : '';
+    if (button) {
+        button.disabled = true;
+        button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generating...';
+    }
+    
+    try {
+        const csrftoken = getCookie('csrftoken');
+        
+        if (!csrftoken) {
+            alert('Error: CSRF token not found. Please refresh the page.');
+            if (button) {
+                button.disabled = false;
+                button.innerHTML = originalText;
+            }
+            return;
+        }
+        
+        const response = await fetch('{% url "generate_esp_teacher_accounts" %}', {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': csrftoken,
+                'Content-Type': 'application/json',
+            },
+        });
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            let credentialsText = `Successfully generated ${data.created_count} ESP teacher accounts!\n\n`;
+            
+            if (data.created_accounts && data.created_accounts.length > 0) {
+                credentialsText += 'Created Accounts:\n';
+                credentialsText += '='.repeat(80) + '\n';
+                credentialsText += `${'#':<4} ${'Username':<25} ${'Password':<12} ${'Name':<20}\n`;
+                credentialsText += '-'.repeat(80) + '\n';
+                
+                data.created_accounts.forEach((account, index) => {
+                    credentialsText += `${(index + 1).toString().padEnd(4)} ${account.username.padEnd(25)} ${account.password.padEnd(12)} ${account.name}\n`;
+                    
+                    // Store password in sessionStorage for display
+                    if (account.id && account.password) {
+                        sessionStorage.setItem(`esp_teacher_password_${account.id}`, JSON.stringify({
+                            password: account.password,
+                            timestamp: new Date().toISOString()
+                        }));
+                    }
+                });
+                
+                credentialsText += '\n';
+            }
+            
+            if (data.skipped && data.skipped.length > 0) {
+                credentialsText += `\nSkipped (${data.skipped_count}):\n`;
+                data.skipped.forEach((item) => {
+                    credentialsText += `- ${item.name}: ${item.reason}\n`;
+                });
+            }
+            
+            if (data.errors && data.errors.length > 0) {
+                credentialsText += `\nErrors (${data.error_count}):\n`;
+                data.errors.forEach((error) => {
+                    credentialsText += `- ${error}\n`;
+                });
+            }
+            
+            // Show credentials in alert
+            alert(credentialsText);
+            
+            // Reload page to show new accounts
+            window.location.reload();
+        } else {
+            alert('Error: ' + (data.error || 'Failed to generate accounts'));
+            if (button) {
+                button.disabled = false;
+                button.innerHTML = originalText;
+            }
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        alert('An error occurred while generating accounts: ' + error.message + '\n\nPlease check the console for more details.');
+        if (button) {
+            button.disabled = false;
+            button.innerHTML = originalText;
+        }
+    }
+}
+</script>
+{% endblock %}
+

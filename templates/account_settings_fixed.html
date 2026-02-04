@@ -1,0 +1,1193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Account Settings - SIRMS</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            position: relative;
+            overflow-x: hidden;
+        }
+        
+        /* Animated Background */
+        body::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: 
+                radial-gradient(circle at 20% 80%, rgba(120, 119, 198, 0.3) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(255, 119, 198, 0.3) 0%, transparent 50%),
+                radial-gradient(circle at 40% 40%, rgba(120, 219, 255, 0.3) 0%, transparent 50%);
+            animation: backgroundShift 20s ease-in-out infinite;
+        }
+        
+        @keyframes backgroundShift {
+            0%, 100% { transform: translateX(0) translateY(0); }
+            25% { transform: translateX(-20px) translateY(-20px); }
+            50% { transform: translateX(20px) translateY(-10px); }
+            75% { transform: translateX(-10px) translateY(20px); }
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            position: relative;
+            z-index: 1;
+        }
+        
+        /* Premium Header */
+        .premium-header {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 24px;
+            padding: 40px;
+            margin-bottom: 30px;
+            box-shadow: 
+                0 8px 32px rgba(0, 0, 0, 0.1),
+                inset 0 1px 0 rgba(255, 255, 255, 0.2);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .premium-header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+            animation: shimmer 3s infinite;
+        }
+        
+        @keyframes shimmer {
+            0% { left: -100%; }
+            100% { left: 100%; }
+        }
+        
+        .profile-section {
+            display: flex;
+            align-items: center;
+            gap: 30px;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .premium-avatar {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 48px;
+            font-weight: 800;
+            color: white;
+            box-shadow: 
+                0 20px 40px rgba(0, 0, 0, 0.2),
+                0 0 0 4px rgba(255, 255, 255, 0.1),
+                0 0 0 8px rgba(255, 255, 255, 0.05);
+            transition: all 0.4s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .premium-avatar::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+            transform: rotate(45deg);
+            animation: avatarGlow 4s linear infinite;
+        }
+        
+        @keyframes avatarGlow {
+            0% { transform: rotate(45deg) translateX(-100%); }
+            100% { transform: rotate(45deg) translateX(100%); }
+        }
+        
+        .premium-avatar:hover {
+            transform: scale(1.05) rotate(5deg);
+            box-shadow: 
+                0 25px 50px rgba(0, 0, 0, 0.3),
+                0 0 0 4px rgba(255, 255, 255, 0.2),
+                0 0 0 8px rgba(255, 255, 255, 0.1);
+        }
+        
+        .profile-info h1 {
+            margin: 0;
+            font-size: 42px;
+            font-weight: 800;
+            color: white;
+            text-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+            letter-spacing: -1px;
+            background: linear-gradient(135deg, #ffffff 0%, #f0f0f0 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .profile-info p {
+            margin: 12px 0 0 0;
+            font-size: 18px;
+            color: rgba(255, 255, 255, 0.8);
+            font-weight: 500;
+        }
+        
+        /* Warning Alert */
+        .premium-warning {
+            background: rgba(255, 193, 7, 0.1);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 193, 7, 0.3);
+            border-radius: 20px;
+            padding: 25px;
+            margin-bottom: 30px;
+            display: flex;
+            align-items: flex-start;
+            gap: 20px;
+            box-shadow: 0 8px 32px rgba(255, 193, 7, 0.1);
+            animation: pulseWarning 2s ease-in-out infinite;
+        }
+        
+        @keyframes pulseWarning {
+            0%, 100% { box-shadow: 0 8px 32px rgba(255, 193, 7, 0.1); }
+            50% { box-shadow: 0 8px 32px rgba(255, 193, 7, 0.2); }
+        }
+        
+        .premium-warning i {
+            color: #ffc107;
+            font-size: 32px;
+            margin-top: 2px;
+            animation: bounce 2s infinite;
+        }
+        
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+            40% { transform: translateY(-10px); }
+            60% { transform: translateY(-5px); }
+        }
+        
+        .premium-warning h3 {
+            margin: 0 0 8px 0;
+            font-size: 22px;
+            font-weight: 800;
+            color: white;
+        }
+        
+        .premium-warning p {
+            margin: 0;
+            font-size: 16px;
+            color: rgba(255, 255, 255, 0.9);
+            font-weight: 500;
+            line-height: 1.6;
+        }
+        
+        /* Content Grid */
+        .premium-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 30px;
+        }
+        
+        /* Premium Cards */
+        .premium-card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 24px;
+            overflow: hidden;
+            margin-bottom: 25px;
+            transition: all 0.4s ease;
+            position: relative;
+            box-shadow: 
+                0 8px 32px rgba(0, 0, 0, 0.1),
+                inset 0 1px 0 rgba(255, 255, 255, 0.2);
+        }
+        
+        .premium-card:hover {
+            transform: translateY(-8px) scale(1.02);
+            box-shadow: 
+                0 20px 60px rgba(0, 0, 0, 0.2),
+                inset 0 1px 0 rgba(255, 255, 255, 0.3);
+            border-color: rgba(255, 255, 255, 0.3);
+        }
+        
+        .premium-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, #667eea, #764ba2, #667eea);
+            background-size: 200% 100%;
+            animation: gradientShift 3s ease-in-out infinite;
+        }
+        
+        @keyframes gradientShift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+        
+        .card-header {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 25px 30px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .card-header i {
+            color: white;
+            font-size: 24px;
+            padding: 12px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+        
+        .card-header h3 {
+            margin: 0;
+            font-size: 22px;
+            font-weight: 800;
+            color: white;
+            letter-spacing: -0.5px;
+        }
+        
+        .card-body {
+            padding: 30px;
+        }
+        
+        /* Form Styles */
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 25px;
+            margin-bottom: 25px;
+        }
+        
+        .form-group {
+            margin-bottom: 25px;
+            position: relative;
+        }
+        
+        .form-label {
+            display: block;
+            font-size: 14px;
+            font-weight: 700;
+            color: white;
+            margin-bottom: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            opacity: 0.9;
+        }
+        
+        .premium-input {
+            width: 100%;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            border-radius: 16px;
+            padding: 18px 24px;
+            font-size: 16px;
+            font-weight: 500;
+            color: white;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+            box-sizing: border-box;
+        }
+        
+        .premium-input::placeholder {
+            color: rgba(255, 255, 255, 0.5);
+        }
+        
+        .premium-input:focus {
+            outline: none;
+            border-color: rgba(255, 255, 255, 0.5);
+            background: rgba(255, 255, 255, 0.15);
+            box-shadow: 
+                0 0 0 4px rgba(255, 255, 255, 0.1),
+                0 8px 32px rgba(0, 0, 0, 0.2);
+            transform: translateY(-2px);
+        }
+        
+        .premium-input:hover {
+            border-color: rgba(255, 255, 255, 0.3);
+            background: rgba(255, 255, 255, 0.12);
+        }
+        
+        /* Premium Buttons */
+        .btn-premium {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 16px;
+            padding: 20px 32px;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            width: 100%;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            box-shadow: 
+                0 8px 24px rgba(102, 126, 234, 0.3),
+                inset 0 1px 0 rgba(255, 255, 255, 0.2);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .btn-premium::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.5s;
+        }
+        
+        .btn-premium:hover::before {
+            left: 100%;
+        }
+        
+        .btn-premium:hover {
+            transform: translateY(-3px);
+            box-shadow: 
+                0 12px 36px rgba(102, 126, 234, 0.4),
+                inset 0 1px 0 rgba(255, 255, 255, 0.3);
+        }
+        
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 16px;
+            padding: 18px 32px;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            width: 100%;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            backdrop-filter: blur(10px);
+        }
+        
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.2);
+            border-color: rgba(255, 255, 255, 0.5);
+            transform: translateY(-3px);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+        }
+        
+        /* Info Items */
+        .info-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s ease;
+        }
+        
+        .info-item:hover {
+            background: rgba(255, 255, 255, 0.05);
+            margin: 0 -20px;
+            padding: 20px;
+            border-radius: 12px;
+        }
+        
+        .info-item:last-child {
+            border-bottom: none;
+        }
+        
+        .info-label {
+            font-weight: 700;
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .info-value {
+            font-weight: 600;
+            color: white;
+            font-size: 15px;
+        }
+        
+        /* Premium Badges */
+        .badge {
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .badge-premium {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+        }
+        
+        .badge-warning {
+            background: linear-gradient(135deg, #ffc107 0%, #ff8f00 100%);
+            color: white;
+            box-shadow: 0 4px 12px rgba(255, 193, 7, 0.3);
+        }
+        
+        /* Password Requirements */
+        .password-requirements {
+            margin-top: 20px;
+            padding: 24px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 16px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+        }
+        
+        .requirement-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 14px;
+            margin-bottom: 12px;
+            font-weight: 500;
+            color: rgba(255, 255, 255, 0.8);
+            transition: all 0.3s ease;
+        }
+        
+        .requirement-item:last-child {
+            margin-bottom: 0;
+        }
+        
+        .requirement-item.valid {
+            color: #4ade80;
+            transform: translateX(5px);
+        }
+        
+        /* Password Strength */
+        .password-strength {
+            height: 6px;
+            border-radius: 3px;
+            margin-top: 15px;
+            background: rgba(255, 255, 255, 0.1);
+            transition: all 0.5s ease;
+            width: 0%;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .password-strength::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+            animation: strengthShimmer 2s infinite;
+        }
+        
+        @keyframes strengthShimmer {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+        
+        .strength-weak { 
+            background: linear-gradient(90deg, #ef4444 0%, #dc2626 100%);
+            width: 33%;
+        }
+        
+        .strength-medium { 
+            background: linear-gradient(90deg, #fbbf24 0%, #f59e0b 100%);
+            width: 66%;
+        }
+        
+        .strength-strong { 
+            background: linear-gradient(90deg, #10b981 0%, #059669 100%);
+            width: 100%;
+        }
+        
+        /* Quick Actions */
+        .quick-action {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 16px 20px;
+            text-decoration: none;
+            color: rgba(255, 255, 255, 0.8);
+            border-radius: 12px;
+            margin-bottom: 8px;
+            transition: all 0.3s ease;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .quick-action::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+            transition: left 0.5s;
+        }
+        
+        .quick-action:hover::before {
+            left: 100%;
+        }
+        
+        .quick-action:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            transform: translateX(8px);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+            border-color: rgba(255, 255, 255, 0.2);
+            text-decoration: none;
+        }
+        
+        .quick-action i {
+            font-size: 18px;
+            width: 24px;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+        
+        .quick-action:hover i {
+            transform: scale(1.2);
+        }
+        
+        /* Animations */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(40px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .premium-card {
+            animation: fadeInUp 0.8s ease-out;
+        }
+        
+        .premium-card:nth-child(1) { animation-delay: 0.1s; }
+        .premium-card:nth-child(2) { animation-delay: 0.2s; }
+        .premium-card:nth-child(3) { animation-delay: 0.3s; }
+        
+        .premium-header {
+            animation: fadeInUp 0.8s ease-out;
+        }
+        
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .premium-grid {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+            
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+            
+            .profile-section {
+                flex-direction: column;
+                text-align: center;
+            }
+            
+            .premium-avatar {
+                width: 100px;
+                height: 100px;
+                font-size: 36px;
+            }
+            
+            .profile-info h1 {
+                font-size: 32px;
+            }
+            
+            .premium-header {
+                padding: 30px 20px;
+            }
+            
+            .card-body {
+                padding: 20px;
+            }
+            
+            body {
+                padding: 15px;
+            }
+        }
+        
+        /* Loading Animation */
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(10px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+        
+        .loading-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+        
+        .loading-spinner {
+            width: 60px;
+            height: 60px;
+            border: 4px solid rgba(255, 255, 255, 0.2);
+            border-top: 4px solid white;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="loading-spinner"></div>
+    </div>
+    
+    <div class="container">
+        <!-- Premium Header -->
+        <div class="premium-header">
+            <div class="profile-section">
+                <div class="premium-avatar">
+                    GC
+                </div>
+                <div class="profile-info">
+                    <h1>Guidance Counselor</h1>
+                    <p>Manage your account information and security preferences</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Password Reset Warning -->
+        <div class="premium-warning">
+            <i class="fas fa-shield-alt"></i>
+            <div>
+                <h3>Password Reset Required</h3>
+                <p>For security reasons, you must reset your password before continuing to use the system.</p>
+            </div>
+        </div>
+
+        <div class="premium-grid">
+            <!-- Main Content -->
+            <div>
+                <!-- Security Settings -->
+                <div class="premium-card">
+                    <div class="card-header">
+                        <i class="fas fa-shield-alt"></i>
+                        <h3>Security Settings</h3>
+                    </div>
+                    <div class="card-body">
+                        <form method="post" id="passwordForm">
+                            <input type="hidden" name="csrfmiddlewaretoken" value="dummy">
+                            <input type="hidden" name="form_type" value="password">
+                            
+                            <div class="form-group">
+                                <label class="form-label">Current Password</label>
+                                <input type="password" name="old_password" required class="premium-input" placeholder="Enter your current password">
+                            </div>
+                            
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label">New Password</label>
+                                    <input type="password" name="new_password1" required minlength="8" id="newPassword" class="premium-input" placeholder="Create a strong password">
+                                    <div id="passwordStrength" class="password-strength"></div>
+                                    <div class="password-requirements">
+                                        <div class="requirement-item" id="lengthReq">
+                                            <span id="lengthCheck" style="color: rgba(255,255,255,0.5);">○</span>
+                                            <span>Minimum 8 characters</span>
+                                        </div>
+                                        <div class="requirement-item" id="letterReq">
+                                            <span id="letterCheck" style="color: rgba(255,255,255,0.5);">○</span>
+                                            <span>Contains letters (A-Z, a-z)</span>
+                                        </div>
+                                        <div class="requirement-item" id="numberReq">
+                                            <span id="numberCheck" style="color: rgba(255,255,255,0.5);">○</span>
+                                            <span>Contains numbers (0-9)</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label class="form-label">Confirm Password</label>
+                                    <input type="password" name="new_password2" required minlength="8" id="confirmPassword" class="premium-input" placeholder="Confirm your new password">
+                                    <div id="passwordMatch" style="margin-top: 12px; font-size: 14px; font-weight: 500;"></div>
+                                </div>
+                            </div>
+                            
+                            <button type="submit" class="btn-premium">
+                                <i class="fas fa-shield-alt" style="margin-right: 8px;"></i>Update Password
+                            </button>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Personal Information -->
+                <div class="premium-card">
+                    <div class="card-header">
+                        <i class="fas fa-user"></i>
+                        <h3>Personal Information</h3>
+                    </div>
+                    <div class="card-body">
+                        <form method="post" id="profileForm">
+                            <input type="hidden" name="csrfmiddlewaretoken" value="dummy">
+                            <input type="hidden" name="form_type" value="profile">
+                            
+                            <div class="form-group">
+                                <label class="form-label">Username</label>
+                                <input type="text" name="username" value="guidance_counselor" class="premium-input" placeholder="Enter username">
+                            </div>
+                            
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label">First Name</label>
+                                    <input type="text" name="first_name" value="Guidance" class="premium-input" placeholder="Enter first name">
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label class="form-label">Last Name</label>
+                                    <input type="text" name="last_name" value="Counselor" class="premium-input" placeholder="Enter last name">
+                                </div>
+                            </div>
+                            
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label">Email Address</label>
+                                    <input type="email" name="email" value="dmlmhs.guidance@gmail.com" class="premium-input" placeholder="Enter email address">
+                                </div>
+                            </div>
+                            
+                            <button type="submit" class="btn-secondary">
+                                <i class="fas fa-save" style="margin-right: 8px;"></i>Save Changes
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sidebar -->
+            <div>
+                <!-- Account Summary -->
+                <div class="premium-card">
+                    <div class="card-header">
+                        <i class="fas fa-id-card"></i>
+                        <h3>Account Summary</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="info-item">
+                            <span class="info-label">Username</span>
+                            <span class="info-value">guidance_counselor</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Role</span>
+                            <span class="badge badge-premium">Guidance Counselor</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Status</span>
+                            <span class="badge badge-premium">Active</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Security Status -->
+                <div class="premium-card">
+                    <div class="card-header">
+                        <i class="fas fa-lock"></i>
+                        <h3>Security Status</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="info-item">
+                            <div style="display: flex; align-items: center; gap: 12px;">
+                                <i class="fas fa-exclamation-triangle" style="color: #ffc107; font-size: 18px;"></i>
+                                <div>
+                                    <div class="info-label" style="margin-bottom: 4px;">Password Status</div>
+                                    <div style="font-size: 12px; color: rgba(255,255,255,0.7);">
+                                        Reset Required
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="info-item">
+                            <div style="display: flex; align-items: center; gap: 12px;">
+                                <i class="fas fa-envelope" style="color: #4ade80; font-size: 18px;"></i>
+                                <div>
+                                    <div class="info-label" style="margin-bottom: 4px;">Email Status</div>
+                                    <div style="font-size: 12px; color: rgba(255,255,255,0.7);">
+                                        Configured
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="info-item">
+                            <div style="display: flex; align-items: center; gap: 12px;">
+                                <i class="fas fa-clock" style="color: #60a5fa; font-size: 18px;"></i>
+                                <div>
+                                    <div class="info-label" style="margin-bottom: 4px;">Last Login</div>
+                                    <div style="font-size: 12px; color: rgba(255,255,255,0.7);">
+                                        Jan 25, 2026 09:45
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quick Actions -->
+                <div class="premium-card">
+                    <div class="card-header">
+                        <i class="fas fa-bolt"></i>
+                        <h3>Quick Actions</h3>
+                    </div>
+                    <div class="card-body" style="padding: 20px;">
+                        <a href="/dashboard/" class="quick-action">
+                            <i class="fas fa-tachometer-alt" style="color: #60a5fa;"></i>
+                            <span>Return to Dashboard</span>
+                        </a>
+                        <a href="#" onclick="window.print()" class="quick-action">
+                            <i class="fas fa-print" style="color: #4ade80;"></i>
+                            <span>Print Account Info</span>
+                        </a>
+                        <a href="/logout/" class="quick-action">
+                            <i class="fas fa-sign-out-alt" style="color: #f87171;"></i>
+                            <span>Sign Out</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Premium Account Settings JavaScript
+        document.addEventListener('DOMContentLoaded', function() {
+            initializePremiumEffects();
+            initializeFormValidation();
+        });
+
+        function initializePremiumEffects() {
+            // Add floating animation to cards
+            const cards = document.querySelectorAll('.premium-card');
+            cards.forEach((card, index) => {
+                card.style.animationDelay = `${index * 0.1}s`;
+            });
+            
+            // Add premium input effects
+            const inputs = document.querySelectorAll('.premium-input');
+            inputs.forEach(input => {
+                input.addEventListener('focus', function() {
+                    createRippleEffect(this);
+                });
+            });
+            
+            // Add premium button effects
+            const buttons = document.querySelectorAll('.btn-premium, .btn-secondary');
+            buttons.forEach(button => {
+                button.addEventListener('click', function(e) {
+                    createButtonRipple(e, this);
+                });
+            });
+        }
+
+        function createRippleEffect(element) {
+            const ripple = document.createElement('div');
+            ripple.style.cssText = `
+                position: absolute;
+                border-radius: 50%;
+                background: rgba(255, 255, 255, 0.3);
+                transform: scale(0);
+                animation: ripple 0.6s linear;
+                pointer-events: none;
+                width: 20px;
+                height: 20px;
+                left: 50%;
+                top: 50%;
+                margin-left: -10px;
+                margin-top: -10px;
+            `;
+            
+            element.style.position = 'relative';
+            element.appendChild(ripple);
+            
+            setTimeout(() => {
+                ripple.remove();
+            }, 600);
+        }
+
+        function createButtonRipple(event, button) {
+            const rect = button.getBoundingClientRect();
+            const size = Math.max(rect.width, rect.height);
+            const x = event.clientX - rect.left - size / 2;
+            const y = event.clientY - rect.top - size / 2;
+            
+            const ripple = document.createElement('div');
+            ripple.style.cssText = `
+                position: absolute;
+                border-radius: 50%;
+                background: rgba(255, 255, 255, 0.4);
+                transform: scale(0);
+                animation: buttonRipple 0.8s ease-out;
+                pointer-events: none;
+                width: ${size}px;
+                height: ${size}px;
+                left: ${x}px;
+                top: ${y}px;
+            `;
+            
+            button.style.position = 'relative';
+            button.style.overflow = 'hidden';
+            button.appendChild(ripple);
+            
+            setTimeout(() => {
+                ripple.remove();
+            }, 800);
+        }
+
+        function initializeFormValidation() {
+            function checkPasswordStrength(password) {
+                let strength = 0;
+                const requirements = {
+                    length: password.length >= 8,
+                    letter: /[a-zA-Z]/.test(password),
+                    number: /\d/.test(password)
+                };
+                
+                Object.keys(requirements).forEach(req => {
+                    const element = document.getElementById(`${req}Check`);
+                    const reqElement = document.getElementById(`${req}Req`);
+                    
+                    if (requirements[req]) {
+                        element.textContent = '✓';
+                        element.style.color = '#4ade80';
+                        element.style.transform = 'scale(1.3)';
+                        reqElement.classList.add('valid');
+                        
+                        setTimeout(() => {
+                            element.style.transform = 'scale(1)';
+                        }, 200);
+                        
+                        strength++;
+                    } else {
+                        element.textContent = '○';
+                        element.style.color = 'rgba(255,255,255,0.5)';
+                        element.style.transform = 'scale(1)';
+                        reqElement.classList.remove('valid');
+                    }
+                });
+                
+                const strengthBar = document.getElementById('passwordStrength');
+                strengthBar.className = 'password-strength';
+                
+                if (strength === 1) {
+                    strengthBar.classList.add('strength-weak');
+                } else if (strength === 2) {
+                    strengthBar.classList.add('strength-medium');
+                } else if (strength === 3) {
+                    strengthBar.classList.add('strength-strong');
+                }
+                
+                return strength === 3;
+            }
+            
+            function checkPasswordMatch() {
+                const password = document.getElementById('newPassword').value;
+                const confirm = document.getElementById('confirmPassword').value;
+                const matchDiv = document.getElementById('passwordMatch');
+                
+                if (confirm === '') {
+                    matchDiv.innerHTML = '';
+                    return false;
+                }
+                
+                if (password === confirm) {
+                    matchDiv.innerHTML = `
+                        <div style="color: #4ade80; display: flex; align-items: center; gap: 8px;">
+                            <i class="fas fa-check-circle"></i>
+                            <span>Passwords match perfectly!</span>
+                        </div>
+                    `;
+                    return true;
+                } else {
+                    matchDiv.innerHTML = `
+                        <div style="color: #f87171; display: flex; align-items: center; gap: 8px;">
+                            <i class="fas fa-times-circle"></i>
+                            <span>Passwords do not match</span>
+                        </div>
+                    `;
+                    return false;
+                }
+            }
+            
+            const newPasswordInput = document.getElementById('newPassword');
+            const confirmPasswordInput = document.getElementById('confirmPassword');
+            
+            if (newPasswordInput) {
+                newPasswordInput.addEventListener('input', function() {
+                    checkPasswordStrength(this.value);
+                    if (confirmPasswordInput.value) {
+                        checkPasswordMatch();
+                    }
+                });
+            }
+            
+            if (confirmPasswordInput) {
+                confirmPasswordInput.addEventListener('input', checkPasswordMatch);
+            }
+            
+            const passwordForm = document.getElementById('passwordForm');
+            if (passwordForm) {
+                passwordForm.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    showPremiumNotification('Password updated successfully!', 'success');
+                });
+            }
+            
+            const profileForm = document.getElementById('profileForm');
+            if (profileForm) {
+                profileForm.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    showPremiumNotification('Profile updated successfully!', 'success');
+                });
+            }
+        }
+
+        function showPremiumNotification(message, type = 'info') {
+            const notification = document.createElement('div');
+            const colors = {
+                success: { bg: '#10b981', icon: 'fa-check-circle' },
+                error: { bg: '#ef4444', icon: 'fa-exclamation-triangle' },
+                info: { bg: '#3b82f6', icon: 'fa-info-circle' }
+            };
+            
+            const color = colors[type] || colors.info;
+            
+            notification.style.cssText = `
+                position: fixed;
+                top: 30px;
+                right: 30px;
+                background: ${color.bg};
+                color: white;
+                padding: 20px 24px;
+                border-radius: 16px;
+                box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+                z-index: 10000;
+                animation: slideInRight 0.5s ease;
+                backdrop-filter: blur(20px);
+                border: 1px solid rgba(255, 255, 255, 0.2);
+                max-width: 400px;
+            `;
+            
+            notification.innerHTML = `
+                <div style="display: flex; align-items: center; gap: 12px;">
+                    <i class="fas ${color.icon}" style="font-size: 20px;"></i>
+                    <div>
+                        <div style="font-weight: 700; margin-bottom: 4px;">
+                            ${type.charAt(0).toUpperCase() + type.slice(1)}
+                        </div>
+                        <div style="font-size: 14px; opacity: 0.9;">
+                            ${message}
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.style.animation = 'slideOutRight 0.5s ease';
+                setTimeout(() => notification.remove(), 500);
+            }, 4000);
+        }
+
+        // Add CSS animations
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes ripple {
+                to {
+                    transform: scale(4);
+                    opacity: 0;
+                }
+            }
+            
+            @keyframes buttonRipple {
+                to {
+                    transform: scale(2);
+                    opacity: 0;
+                }
+            }
+            
+            @keyframes slideInRight {
+                from {
+                    transform: translateX(100%);
+                    opacity: 0;
+                }
+                to {
+                    transform: translateX(0);
+                    opacity: 1;
+                }
+            }
+            
+            @keyframes slideOutRight {
+                from {
+                    transform: translateX(0);
+                    opacity: 1;
+                }
+                to {
+                    transform: translateX(100%);
+                    opacity: 0;
+                }
+            }
+        `;
+        document.head.appendChild(style);
+    </script>
+</body>
+</html>

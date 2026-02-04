@@ -1,0 +1,131 @@
+<!-- Academic Structure Dynamic Dropdowns JavaScript -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Get dropdown elements
+    const curriculumSelect = document.getElementById('id_curriculum');
+    const trackSelect = document.getElementById('id_track');
+    const gradeSelect = document.getElementById('id_grade');
+    const sectionSelect = document.getElementById('id_section');
+
+    // Function to clear and disable dependent dropdowns
+    function clearDependentDropdowns(startFrom) {
+        const dropdowns = [trackSelect, gradeSelect, sectionSelect];
+        const startIndex = dropdowns.indexOf(startFrom);
+        
+        for (let i = startIndex; i < dropdowns.length; i++) {
+            if (dropdowns[i]) {
+                dropdowns[i].innerHTML = '<option value="">Select...</option>';
+                dropdowns[i].disabled = true;
+            }
+        }
+    }
+
+    // Function to populate dropdown with options
+    function populateDropdown(dropdown, options, valueField = 'id', textField = 'name') {
+        dropdown.innerHTML = '<option value="">Select...</option>';
+        options.forEach(option => {
+            const optionElement = document.createElement('option');
+            optionElement.value = option[valueField];
+            optionElement.textContent = option[textField];
+            dropdown.appendChild(optionElement);
+        });
+        dropdown.disabled = false;
+    }
+
+    // Curriculum change handler
+    if (curriculumSelect) {
+        curriculumSelect.addEventListener('change', function() {
+            const curriculumId = this.value;
+            
+            // Clear dependent dropdowns
+            clearDependentDropdowns(trackSelect);
+            
+            if (curriculumId) {
+                // Fetch tracks for selected curriculum
+                fetch(`{% url 'get_tracks_by_curriculum' %}?curriculum_id=${curriculumId}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.tracks && data.tracks.length > 0) {
+                            populateDropdown(trackSelect, data.tracks);
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error fetching tracks:', error);
+                    });
+            }
+        });
+    }
+
+    // Track change handler
+    if (trackSelect) {
+        trackSelect.addEventListener('change', function() {
+            const trackId = this.value;
+            
+            // Clear dependent dropdowns
+            clearDependentDropdowns(gradeSelect);
+            
+            if (trackId) {
+                // Fetch grades for selected track
+                fetch(`{% url 'get_grades_by_track' %}?track_id=${trackId}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.grades && data.grades.length > 0) {
+                            populateDropdown(gradeSelect, data.grades, 'id', 'level');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error fetching grades:', error);
+                    });
+            }
+        });
+    }
+
+    // Grade change handler
+    if (gradeSelect) {
+        gradeSelect.addEventListener('change', function() {
+            const gradeId = this.value;
+            
+            // Clear dependent dropdowns
+            clearDependentDropdowns(sectionSelect);
+            
+            if (gradeId) {
+                // Fetch sections for selected grade
+                fetch(`{% url 'get_sections_by_grade' %}?grade_id=${gradeId}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.sections && data.sections.length > 0) {
+                            populateDropdown(sectionSelect, data.sections);
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error fetching sections:', error);
+                    });
+            }
+        });
+    }
+
+    // Initialize dropdowns on page load if there are pre-selected values
+    function initializeDropdowns() {
+        if (curriculumSelect && curriculumSelect.value) {
+            curriculumSelect.dispatchEvent(new Event('change'));
+            
+            // Wait a bit for the tracks to load, then trigger track change if needed
+            setTimeout(() => {
+                if (trackSelect && trackSelect.value) {
+                    trackSelect.dispatchEvent(new Event('change'));
+                    
+                    // Wait for grades to load, then trigger grade change if needed
+                    setTimeout(() => {
+                        if (gradeSelect && gradeSelect.value) {
+                            gradeSelect.dispatchEvent(new Event('change'));
+                        }
+                    }, 500);
+                }
+            }, 500);
+        }
+    }
+
+    // Initialize after a short delay to ensure all elements are ready
+    setTimeout(initializeDropdowns, 100);
+});
+</script>

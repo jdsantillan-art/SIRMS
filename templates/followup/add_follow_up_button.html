@@ -1,0 +1,14 @@
+{% comment %}
+Include this snippet in schedule templates to add a "Add Follow-Up" button
+Usage: {% include 'followup/add_follow_up_button.html' with schedule=schedule schedule_type='counseling_schedule' %}
+{% endcomment %}
+{% if schedule.status == 'completed' or schedule.status == 'scheduled' %}
+<a href="{% url 'add_follow_up' %}?schedule_type={{ schedule_type }}&schedule_id={{ schedule.id }}" 
+   class="inline-flex items-center px-3 py-1.5 bg-green-600 hover:bg-green-700 text-white rounded-md text-sm transition-colors"
+   title="Add Follow-Up Record">
+    <i class="fas fa-clipboard-check mr-1.5"></i>
+    Add Follow-Up
+</a>
+{% endif %}
+
+

@@ -1,0 +1,838 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SIRMS - School Incident Reporting & Management System</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <style>
+        :root {
+            --primary: #2E8B57;
+            --primary-light: #4CAF7F;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background-color: #f8fafc;
+        }
+
+        .sidebar {
+            background: #2E8B57;
+            transition: all 0.3s ease;
+            box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .sidebar.collapsed {
+            width: 4rem !important;
+        }
+
+        .sidebar.collapsed .sidebar-text {
+            display: none;
+        }
+
+        .sidebar a {
+            color: #ffffff;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            padding: 12px 16px;
+            margin: 4px 8px;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            font-weight: 600;
+        }
+
+        .sidebar a:hover {
+            background-color: rgba(255, 255, 255, 0.2);
+            transform: translateX(4px);
+        }
+
+        .sidebar a.active {
+            background-color: rgba(255, 255, 255, 0.3);
+            border-left: 3px solid rgba(255, 255, 255, 0.9);
+        }
+
+        .sidebar a i {
+            width: 20px;
+            margin-right: 12px;
+            text-align: center;
+        }
+
+        .page {
+            display: none;
+        }
+
+        .page.active {
+            display: block;
+        }
+
+        .chart-wrapper {
+            position: relative;
+            height: 320px;
+            width: 100%;
+        }
+
+        input[type="text"],
+        input[type="email"],
+        input[type="date"],
+        input[type="time"],
+        select,
+        textarea {
+            width: 100%;
+            padding: 0.5rem;
+            border: 1px solid #d1d5db;
+            border-radius: 0.5rem;
+            font-size: 0.875rem;
+        }
+
+        input:focus,
+        select:focus,
+        textarea:focus {
+            outline: none;
+            border-color: #2E8B57;
+            ring: 2px;
+            ring-color: #2E8B57;
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <!-- Login Page -->
+    <div id="login-page" class="page active min-h-screen flex items-center justify-center bg-gradient-to-br from-emerald-50 to-teal-50">
+        <div class="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-md">
+            <div class="text-center mb-8">
+                <h1 class="text-3xl font-bold text-emerald-600 mb-2">SIRMS</h1>
+                <p class="text-gray-600">School Incident Reporting & Management System</p>
+            </div>
+            <form id="login-form" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                    <input type="email" id="login-email" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Password</label>
+                    <input type="password" id="login-password" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Role</label>
+                    <select id="login-role" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500">
+                        <option value="student">Student</option>
+                        <option value="teacher">Teacher</option>
+                        <option value="do">Discipline Office</option>
+                        <option value="counselor">Counselor</option>
+                        <option value="esp_teacher">ESP Teacher</option>
+                    </select>
+                </div>
+                <button type="submit" class="w-full bg-emerald-600 text-white py-2 rounded-lg font-semibold hover:bg-emerald-700 transition-colors">
+                    Login
+                </button>
+            </form>
+            <p class="text-xs text-gray-500 mt-4 text-center">
+                Demo Mode: Use any email/password to login
+            </p>
+        </div>
+    </div>
+
+    <!-- Main Application -->
+    <div id="app" class="page">
+        <div class="flex h-screen overflow-hidden">
+            <!-- Sidebar -->
+            <div id="sidebar" class="sidebar w-64 h-screen flex flex-col fixed lg:relative z-50 overflow-y-auto">
+                <div class="p-6 border-b border-white/20">
+                    <div class="flex items-center justify-between">
+                        <h2 class="sidebar-logo text-2xl font-bold sidebar-text" style="color: #ffffff;">SIRMS</h2>
+                        <button id="sidebarToggle" class="hover:bg-white/30 p-2 rounded-lg transition-colors text-white">
+                            <i class="fas fa-bars"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <nav class="flex-1 py-6">
+                    <a href="#" data-page="dashboard" class="nav-item active">
+                        <i class="fas fa-tachometer-alt"></i>
+                        <span class="sidebar-text">Dashboard</span>
+                    </a>
+                    <a href="#" data-page="report-incident" class="nav-item">
+                        <i class="fas fa-edit"></i>
+                        <span class="sidebar-text">Report Incident</span>
+                    </a>
+                    <a href="#" data-page="my-reports" class="nav-item">
+                        <i class="fas fa-clipboard-list"></i>
+                        <span class="sidebar-text">My Reports</span>
+                    </a>
+                    <a href="#" data-page="all-reports" class="nav-item">
+                        <i class="fas fa-chart-bar"></i>
+                        <span class="sidebar-text">All Reports</span>
+                    </a>
+                    <a href="#" data-page="account-settings" class="nav-item">
+                        <i class="fas fa-user-cog"></i>
+                        <span class="sidebar-text">Account Settings</span>
+                    </a>
+                    <a href="#" id="logout-btn" class="nav-item">
+                        <i class="fas fa-sign-out-alt"></i>
+                        <span class="sidebar-text">Logout</span>
+                    </a>
+                </nav>
+            </div>
+
+            <!-- Main Content -->
+            <div class="flex-1 flex flex-col lg:ml-0 overflow-hidden">
+                <header class="bg-white shadow-sm border-b border-gray-200 px-6 py-4 flex-shrink-0">
+                    <div class="flex items-center justify-between">
+                        <h1 id="page-title" class="text-xl font-semibold text-gray-800">Dashboard</h1>
+                        <div class="flex items-center space-x-4">
+                            <div class="flex items-center space-x-3">
+                                <div class="w-8 h-8 bg-green-600 rounded-full flex items-center justify-center text-white font-semibold" id="user-initials">
+                                    U
+                                </div>
+                                <div class="hidden md:block text-left">
+                                    <div class="text-sm font-medium text-gray-900" id="user-name">User</div>
+                                    <div class="text-xs text-gray-500" id="user-role">Role</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </header>
+
+                <main class="flex-1 p-6 overflow-auto">
+                    <!-- Dashboard Page -->
+                    <div id="dashboard-page" class="page-content">
+                        <div class="max-w-7xl mx-auto">
+                            <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-4 gap-3">
+                                <h1 class="text-2xl font-bold text-gray-800">📊 Dashboard</h1>
+                                <select id="timeFilter" class="border border-emerald-300 rounded-lg px-4 py-2 text-sm bg-white shadow-sm">
+                                    <option value="monthly" selected>Monthly View</option>
+                                    <option value="quarterly">Quarterly View</option>
+                                    <option value="yearly">Yearly View</option>
+                                </select>
+                            </div>
+
+                            <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
+                                <div class="bg-white rounded-xl p-4 shadow-md border-l-4 border-emerald-500">
+                                    <div class="flex items-center justify-between">
+                                        <div>
+                                            <p class="text-xs text-gray-500 uppercase">Total Reports</p>
+                                            <p class="text-2xl font-bold text-gray-800 mt-1" id="totalReports">0</p>
+                                        </div>
+                                        <div class="bg-emerald-100 p-3 rounded-lg">
+                                            <i class="fas fa-file-alt text-emerald-600 text-xl"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="bg-white rounded-xl p-4 shadow-md border-l-4 border-orange-500">
+                                    <div class="flex items-center justify-between">
+                                        <div>
+                                            <p class="text-xs text-gray-500 uppercase">Pending</p>
+                                            <p class="text-2xl font-bold text-gray-800 mt-1" id="pendingReports">0</p>
+                                        </div>
+                                        <div class="bg-orange-100 p-3 rounded-lg">
+                                            <i class="fas fa-clock text-orange-600 text-xl"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="bg-white rounded-xl p-4 shadow-md border-l-4 border-blue-500">
+                                    <div class="flex items-center justify-between">
+                                        <div>
+                                            <p class="text-xs text-gray-500 uppercase">Under Review</p>
+                                            <p class="text-2xl font-bold text-gray-800 mt-1" id="reviewReports">0</p>
+                                        </div>
+                                        <div class="bg-blue-100 p-3 rounded-lg">
+                                            <i class="fas fa-search text-blue-600 text-xl"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="bg-white rounded-xl p-4 shadow-md border-l-4 border-green-500">
+                                    <div class="flex items-center justify-between">
+                                        <div>
+                                            <p class="text-xs text-gray-500 uppercase">Resolved</p>
+                                            <p class="text-2xl font-bold text-gray-800 mt-1" id="resolvedReports">0</p>
+                                        </div>
+                                        <div class="bg-green-100 p-3 rounded-lg">
+                                            <i class="fas fa-check-circle text-green-600 text-xl"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="mt-6 space-y-4">
+                                <div class="bg-white rounded-lg shadow-md border border-gray-200 overflow-hidden">
+                                    <div class="p-6">
+                                        <h3 class="text-xl font-bold text-gray-800 mb-1">Reports by Month</h3>
+                                        <div class="chart-wrapper">
+                                            <canvas id="monthChart"></canvas>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="bg-white rounded-lg shadow-md border border-gray-200 overflow-hidden">
+                                    <div class="p-6">
+                                        <h3 class="text-xl font-bold text-gray-800 mb-1">Reports by Grade Level</h3>
+                                        <div class="chart-wrapper">
+                                            <canvas id="gradeChart"></canvas>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Report Incident Page -->
+                    <div id="report-incident-page" class="page-content" style="display: none;">
+                        <div class="max-w-5xl mx-auto">
+                            <div class="bg-white rounded-3xl shadow-2xl border border-gray-100 overflow-hidden">
+                                <div class="bg-gradient-to-r from-emerald-600 to-teal-600 px-5 py-2.5">
+                                    <div class="flex items-center justify-between text-white">
+                                        <div class="flex items-center space-x-2">
+                                            <i class="fas fa-shield-alt text-sm"></i>
+                                            <span class="font-bold text-base">Report Incident</span>
+                                        </div>
+                                        <div class="text-xs opacity-90">* Required</div>
+                                    </div>
+                                </div>
+
+                                <form id="incident-form" class="p-4">
+                                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-3 pb-3 border-b border-gray-200">
+                                        <div>
+                                            <h2 class="text-sm font-bold text-gray-900 mb-2">Reporter Info</h2>
+                                            <div class="space-y-2">
+                                                <div class="grid grid-cols-2 gap-2">
+                                                    <div>
+                                                        <label class="block text-xs font-semibold text-gray-700 mb-0.5">First Name <span class="text-red-500">*</span></label>
+                                                        <input type="text" id="reporter-first-name" required>
+                                                    </div>
+                                                    <div>
+                                                        <label class="block text-xs font-semibold text-gray-700 mb-0.5">Last Name <span class="text-red-500">*</span></label>
+                                                        <input type="text" id="reporter-last-name" required>
+                                                    </div>
+                                                </div>
+                                                <div>
+                                                    <label class="block text-xs font-semibold text-gray-700 mb-0.5">Middle Name</label>
+                                                    <input type="text" id="reporter-middle-name">
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <h2 class="text-sm font-bold text-gray-900 mb-2">Academic Info</h2>
+                                            <div class="space-y-2">
+                                                <div>
+                                                    <label class="block text-xs font-semibold text-gray-700 mb-0.5">Grade Level</label>
+                                                    <select id="grade-level">
+                                                        <option value="">Select Grade</option>
+                                                        <option value="7">Grade 7</option>
+                                                        <option value="8">Grade 8</option>
+                                                        <option value="9">Grade 9</option>
+                                                        <option value="10">Grade 10</option>
+                                                        <option value="11">Grade 11</option>
+                                                        <option value="12">Grade 12</option>
+                                                    </select>
+                                                </div>
+                                                <div>
+                                                    <label class="block text-xs font-semibold text-gray-700 mb-0.5">Section</label>
+                                                    <input type="text" id="section-name">
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label class="block text-xs font-semibold text-gray-700 mb-0.5">Incident Type <span class="text-red-500">*</span></label>
+                                        <select id="incident-type" required>
+                                            <option value="">Select Incident Type</option>
+                                            <option value="Bullying">Bullying</option>
+                                            <option value="Fighting">Fighting</option>
+                                            <option value="Vandalism">Vandalism</option>
+                                            <option value="Theft">Theft</option>
+                                            <option value="Other">Other</option>
+                                        </select>
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label class="block text-xs font-semibold text-gray-700 mb-0.5">Description <span class="text-red-500">*</span></label>
+                                        <textarea id="description" rows="4" required></textarea>
+                                    </div>
+
+                                    <div class="grid grid-cols-2 gap-2 mb-3">
+                                        <div>
+                                            <label class="block text-xs font-semibold text-gray-700 mb-0.5">Incident Date <span class="text-red-500">*</span></label>
+                                            <input type="date" id="incident-date" required>
+                                        </div>
+                                        <div>
+                                            <label class="block text-xs font-semibold text-gray-700 mb-0.5">Incident Time</label>
+                                            <input type="time" id="incident-time">
+                                        </div>
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label class="block text-xs font-semibold text-gray-700 mb-0.5">Location</label>
+                                        <input type="text" id="location" placeholder="e.g., Classroom, Hallway, Playground">
+                                    </div>
+
+                                    <div class="flex justify-end gap-2">
+                                        <button type="button" onclick="navigateTo('dashboard')" class="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium hover:bg-gray-50">
+                                            Cancel
+                                        </button>
+                                        <button type="submit" class="px-4 py-2 bg-emerald-600 text-white rounded-lg text-sm font-medium hover:bg-emerald-700">
+                                            Submit Report
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- My Reports Page -->
+                    <div id="my-reports-page" class="page-content" style="display: none;">
+                        <div class="max-w-7xl mx-auto">
+                            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4">
+                                <h1 class="text-2xl font-bold text-green-700">📋 My Reports</h1>
+                                <div class="flex gap-2">
+                                    <select id="status-filter" class="px-3 py-1.5 text-sm border border-gray-300 rounded-lg bg-white">
+                                        <option value="">All Status</option>
+                                        <option value="pending">Pending</option>
+                                        <option value="under_review">Under Review</option>
+                                        <option value="resolved">Resolved</option>
+                                    </select>
+                                    <button onclick="navigateTo('report-incident')" class="bg-green-600 text-white px-4 py-1.5 rounded-lg text-sm font-medium hover:bg-green-700">
+                                        + New Report
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden">
+                                <div class="p-4 border-b border-gray-200 bg-gray-50">
+                                    <div class="flex items-center justify-between">
+                                        <h2 class="text-sm font-semibold text-gray-700">My Reports</h2>
+                                        <span class="text-xs text-gray-500" id="reports-count">0 total</span>
+                                    </div>
+                                </div>
+                                <div class="overflow-x-auto">
+                                    <table class="w-full">
+                                        <thead class="bg-gray-50">
+                                            <tr class="border-b border-gray-200">
+                                                <th class="px-4 py-2 text-left text-xs font-semibold text-gray-600 uppercase">Case ID</th>
+                                                <th class="px-4 py-2 text-left text-xs font-semibold text-gray-600 uppercase">Incident Type</th>
+                                                <th class="px-4 py-2 text-left text-xs font-semibold text-gray-600 uppercase">Date</th>
+                                                <th class="px-4 py-2 text-left text-xs font-semibold text-gray-600 uppercase">Status</th>
+                                                <th class="px-4 py-2 text-center text-xs font-semibold text-gray-600 uppercase">Action</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="my-reports-table" class="divide-y divide-gray-200">
+                                            <!-- Reports will be inserted here -->
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- All Reports Page -->
+                    <div id="all-reports-page" class="page-content" style="display: none;">
+                        <div class="max-w-7xl mx-auto">
+                            <h1 class="text-2xl font-bold text-gray-800 mb-4">📊 All Reports</h1>
+                            <div class="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden">
+                                <div class="overflow-x-auto">
+                                    <table class="w-full">
+                                        <thead class="bg-gray-50">
+                                            <tr class="border-b border-gray-200">
+                                                <th class="px-4 py-2 text-left text-xs font-semibold text-gray-600 uppercase">Case ID</th>
+                                                <th class="px-4 py-2 text-left text-xs font-semibold text-gray-600 uppercase">Reporter</th>
+                                                <th class="px-4 py-2 text-left text-xs font-semibold text-gray-600 uppercase">Incident Type</th>
+                                                <th class="px-4 py-2 text-left text-xs font-semibold text-gray-600 uppercase">Date</th>
+                                                <th class="px-4 py-2 text-left text-xs font-semibold text-gray-600 uppercase">Status</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="all-reports-table" class="divide-y divide-gray-200">
+                                            <!-- Reports will be inserted here -->
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Account Settings Page -->
+                    <div id="account-settings-page" class="page-content" style="display: none;">
+                        <div class="max-w-2xl mx-auto">
+                            <h1 class="text-2xl font-bold text-gray-800 mb-4">⚙️ Account Settings</h1>
+                            <div class="bg-white rounded-xl shadow-lg border border-gray-200 p-6">
+                                <div class="space-y-4">
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">Name</label>
+                                        <input type="text" id="settings-name" class="w-full px-4 py-2 border border-gray-300 rounded-lg">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                                        <input type="email" id="settings-email" class="w-full px-4 py-2 border border-gray-300 rounded-lg">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">Role</label>
+                                        <input type="text" id="settings-role" class="w-full px-4 py-2 border border-gray-300 rounded-lg" readonly>
+                                    </div>
+                                    <button onclick="saveSettings()" class="w-full bg-emerald-600 text-white py-2 rounded-lg font-semibold hover:bg-emerald-700">
+                                        Save Changes
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </main>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Data Storage
+        const Storage = {
+            getReports: () => JSON.parse(localStorage.getItem('reports') || '[]'),
+            saveReports: (reports) => localStorage.setItem('reports', JSON.stringify(reports)),
+            getUser: () => JSON.parse(localStorage.getItem('currentUser') || 'null'),
+            saveUser: (user) => localStorage.setItem('currentUser', JSON.stringify(user)),
+            clearUser: () => localStorage.removeItem('currentUser')
+        };
+
+        // Initialize sample data
+        function initSampleData() {
+            if (Storage.getReports().length === 0) {
+                const sampleReports = [
+                    {
+                        id: 'CASE-001',
+                        reporterFirstName: 'John',
+                        reporterLastName: 'Doe',
+                        incidentType: 'Bullying',
+                        description: 'Sample incident report',
+                        incidentDate: '2024-01-15',
+                        status: 'pending',
+                        createdAt: new Date().toISOString()
+                    },
+                    {
+                        id: 'CASE-002',
+                        reporterFirstName: 'Jane',
+                        reporterLastName: 'Smith',
+                        incidentType: 'Fighting',
+                        description: 'Another sample report',
+                        incidentDate: '2024-01-20',
+                        status: 'under_review',
+                        createdAt: new Date().toISOString()
+                    }
+                ];
+                Storage.saveReports(sampleReports);
+            }
+        }
+
+        // Navigation
+        function navigateTo(page) {
+            document.querySelectorAll('.page-content').forEach(p => p.style.display = 'none');
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+            
+            const pageElement = document.getElementById(page + '-page');
+            const navItem = document.querySelector(`[data-page="${page}"]`);
+            
+            if (pageElement) {
+                pageElement.style.display = 'block';
+            }
+            if (navItem) {
+                navItem.classList.add('active');
+            }
+
+            // Update page title
+            const titles = {
+                'dashboard': 'Dashboard',
+                'report-incident': 'Report Incident',
+                'my-reports': 'My Reports',
+                'all-reports': 'All Reports',
+                'account-settings': 'Account Settings'
+            };
+            document.getElementById('page-title').textContent = titles[page] || 'Dashboard';
+
+            // Load page-specific data
+            if (page === 'dashboard') {
+                loadDashboard();
+            } else if (page === 'my-reports') {
+                loadMyReports();
+            } else if (page === 'all-reports') {
+                loadAllReports();
+            } else if (page === 'account-settings') {
+                loadAccountSettings();
+            }
+        }
+
+        // Dashboard
+        let monthChart, gradeChart;
+        function loadDashboard() {
+            const reports = Storage.getReports();
+            const user = Storage.getUser();
+            
+            // Update counters
+            document.getElementById('totalReports').textContent = reports.length;
+            document.getElementById('pendingReports').textContent = reports.filter(r => r.status === 'pending').length;
+            document.getElementById('reviewReports').textContent = reports.filter(r => r.status === 'under_review').length;
+            document.getElementById('resolvedReports').textContent = reports.filter(r => r.status === 'resolved').length;
+
+            // Charts
+            setTimeout(() => {
+                createCharts(reports);
+            }, 100);
+        }
+
+        function createCharts(reports) {
+            // Month Chart
+            const monthData = {};
+            reports.forEach(r => {
+                const month = new Date(r.incidentDate).toLocaleDateString('en-US', { month: 'short' });
+                monthData[month] = (monthData[month] || 0) + 1;
+            });
+            
+            const monthCtx = document.getElementById('monthChart');
+            if (monthChart) monthChart.destroy();
+            monthChart = new Chart(monthCtx, {
+                type: 'line',
+                data: {
+                    labels: Object.keys(monthData),
+                    datasets: [{
+                        label: 'Reports',
+                        data: Object.values(monthData),
+                        borderColor: '#2563EB',
+                        backgroundColor: 'rgba(37, 99, 235, 0.1)',
+                        tension: 0.4,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }
+                    }
+                }
+            });
+
+            // Grade Chart
+            const gradeData = {};
+            reports.forEach(r => {
+                const grade = r.gradeLevel || 'Unknown';
+                gradeData[grade] = (gradeData[grade] || 0) + 1;
+            });
+
+            const gradeCtx = document.getElementById('gradeChart');
+            if (gradeChart) gradeChart.destroy();
+            gradeChart = new Chart(gradeCtx, {
+                type: 'bar',
+                data: {
+                    labels: Object.keys(gradeData),
+                    datasets: [{
+                        label: 'Reports',
+                        data: Object.values(gradeData),
+                        backgroundColor: '#10B981'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }
+                    }
+                }
+            });
+        }
+
+        // My Reports
+        function loadMyReports() {
+            const reports = Storage.getReports();
+            const user = Storage.getUser();
+            const userReports = reports.filter(r => 
+                r.reporterFirstName === user.firstName && 
+                r.reporterLastName === user.lastName
+            );
+
+            const tbody = document.getElementById('my-reports-table');
+            tbody.innerHTML = '';
+            document.getElementById('reports-count').textContent = `${userReports.length} total`;
+
+            userReports.forEach(report => {
+                const tr = document.createElement('tr');
+                tr.className = 'hover:bg-gray-50';
+                tr.innerHTML = `
+                    <td class="px-4 py-3"><span class="text-sm font-semibold">${report.id}</span></td>
+                    <td class="px-4 py-3"><span class="text-sm">${report.incidentType}</span></td>
+                    <td class="px-4 py-3"><span class="text-sm">${new Date(report.incidentDate).toLocaleDateString()}</span></td>
+                    <td class="px-4 py-3">
+                        <span class="px-2 py-1 text-xs font-medium rounded-full ${
+                            report.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                            report.status === 'under_review' ? 'bg-blue-100 text-blue-800' :
+                            'bg-green-100 text-green-800'
+                        }">${report.status.replace('_', ' ').toUpperCase()}</span>
+                    </td>
+                    <td class="px-4 py-3 text-center">
+                        <button onclick="viewReport('${report.id}')" class="bg-green-600 text-white px-3 py-1 rounded text-xs hover:bg-green-700">
+                            View
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        // All Reports
+        function loadAllReports() {
+            const reports = Storage.getReports();
+            const tbody = document.getElementById('all-reports-table');
+            tbody.innerHTML = '';
+
+            reports.forEach(report => {
+                const tr = document.createElement('tr');
+                tr.className = 'hover:bg-gray-50';
+                tr.innerHTML = `
+                    <td class="px-4 py-3"><span class="text-sm font-semibold">${report.id}</span></td>
+                    <td class="px-4 py-3"><span class="text-sm">${report.reporterFirstName} ${report.reporterLastName}</span></td>
+                    <td class="px-4 py-3"><span class="text-sm">${report.incidentType}</span></td>
+                    <td class="px-4 py-3"><span class="text-sm">${new Date(report.incidentDate).toLocaleDateString()}</span></td>
+                    <td class="px-4 py-3">
+                        <span class="px-2 py-1 text-xs font-medium rounded-full ${
+                            report.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                            report.status === 'under_review' ? 'bg-blue-100 text-blue-800' :
+                            'bg-green-100 text-green-800'
+                        }">${report.status.replace('_', ' ').toUpperCase()}</span>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        // Account Settings
+        function loadAccountSettings() {
+            const user = Storage.getUser();
+            if (user) {
+                document.getElementById('settings-name').value = `${user.firstName} ${user.lastName}`;
+                document.getElementById('settings-email').value = user.email;
+                document.getElementById('settings-role').value = user.role;
+            }
+        }
+
+        function saveSettings() {
+            const user = Storage.getUser();
+            if (user) {
+                const nameParts = document.getElementById('settings-name').value.split(' ');
+                user.firstName = nameParts[0] || '';
+                user.lastName = nameParts.slice(1).join(' ') || '';
+                user.email = document.getElementById('settings-email').value;
+                Storage.saveUser(user);
+                updateUserDisplay();
+                alert('Settings saved!');
+            }
+        }
+
+        // Report Incident
+        document.getElementById('incident-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const reports = Storage.getReports();
+            const newReport = {
+                id: 'CASE-' + String(reports.length + 1).padStart(3, '0'),
+                reporterFirstName: document.getElementById('reporter-first-name').value,
+                reporterLastName: document.getElementById('reporter-last-name').value,
+                reporterMiddleName: document.getElementById('reporter-middle-name').value,
+                gradeLevel: document.getElementById('grade-level').value,
+                sectionName: document.getElementById('section-name').value,
+                incidentType: document.getElementById('incident-type').value,
+                description: document.getElementById('description').value,
+                incidentDate: document.getElementById('incident-date').value,
+                incidentTime: document.getElementById('incident-time').value,
+                location: document.getElementById('location').value,
+                status: 'pending',
+                createdAt: new Date().toISOString()
+            };
+
+            reports.push(newReport);
+            Storage.saveReports(reports);
+            
+            alert('Report submitted successfully!');
+            this.reset();
+            navigateTo('my-reports');
+        });
+
+        // Login
+        document.getElementById('login-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const email = document.getElementById('login-email').value;
+            const role = document.getElementById('login-role').value;
+            const nameParts = email.split('@')[0].split('.');
+            
+            const user = {
+                email: email,
+                firstName: nameParts[0] || 'User',
+                lastName: nameParts[1] || '',
+                role: role
+            };
+
+            Storage.saveUser(user);
+            updateUserDisplay();
+            document.getElementById('login-page').classList.remove('active');
+            document.getElementById('app').classList.add('active');
+            navigateTo('dashboard');
+        });
+
+        // Logout
+        document.getElementById('logout-btn').addEventListener('click', function(e) {
+            e.preventDefault();
+            Storage.clearUser();
+            document.getElementById('app').classList.remove('active');
+            document.getElementById('login-page').classList.add('active');
+        });
+
+        // Sidebar navigation
+        document.querySelectorAll('.nav-item[data-page]').forEach(item => {
+            item.addEventListener('click', function(e) {
+                e.preventDefault();
+                navigateTo(this.getAttribute('data-page'));
+            });
+        });
+
+        // Sidebar toggle
+        document.getElementById('sidebarToggle').addEventListener('click', function() {
+            document.getElementById('sidebar').classList.toggle('collapsed');
+        });
+
+        // Update user display
+        function updateUserDisplay() {
+            const user = Storage.getUser();
+            if (user) {
+                const initials = (user.firstName[0] || '') + (user.lastName[0] || '');
+                document.getElementById('user-initials').textContent = initials.toUpperCase();
+                document.getElementById('user-name').textContent = `${user.firstName} ${user.lastName}`;
+                document.getElementById('user-role').textContent = user.role.replace('_', ' ').toUpperCase();
+            }
+        }
+
+        // View Report
+        function viewReport(id) {
+            const reports = Storage.getReports();
+            const report = reports.find(r => r.id === id);
+            if (report) {
+                alert(`Report Details:\n\nCase ID: ${report.id}\nType: ${report.incidentType}\nDescription: ${report.description}\nStatus: ${report.status}`);
+            }
+        }
+
+        // Initialize
+        initSampleData();
+        const user = Storage.getUser();
+        if (user) {
+            updateUserDisplay();
+            document.getElementById('login-page').classList.remove('active');
+            document.getElementById('app').classList.add('active');
+            navigateTo('dashboard');
+        }
+    </script>
+</body>
+</html>
+
+
+
+
+

@@ -1,0 +1,2005 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Dashboard - SIRMS{% endblock %}
+
+{% block extra_head %}
+<style>
+    body {
+        overflow-x: hidden;
+    }
+    .compact-chart { 
+        height: 200px !important;
+        max-height: 200px !important;
+    }
+    .mini-card { 
+        padding: 0.75rem !important; 
+    }
+    .dashboard-container {
+        max-width: 100%;
+        overflow-x: hidden;
+    }
+    .chart-wrapper {
+        position: relative;
+        height: 200px;
+        width: 100%;
+    }
+    /* Prevent chart overflow */
+    canvas {
+        max-width: 100% !important;
+        height: auto !important;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="dashboard-container max-w-7xl mx-auto px-4 py-3">
+    {% if user.role == 'student' or user.role == 'teacher' %}
+    <!-- Student/Teacher Dashboard -->
+    <div class="bg-gradient-to-br from-emerald-50 via-teal-50 to-cyan-50 py-4">
+        <div class="max-w-6xl mx-auto px-4 space-y-3">
+            
+            <!-- Welcome Header - Compact -->
+            <div class="bg-gradient-to-r from-emerald-600 to-teal-600 rounded-xl p-4 text-white shadow-lg">
+                <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                    <div>
+                        <h1 class="text-xl font-bold">Welcome, {{ user.get_full_name }}! 👋</h1>
+                        <p class="text-sm text-emerald-100">{% if user.role == 'student' %}Your safety matters{% else %}Keep our school safe{% endif %}</p>
+                    </div>
+                    <a href="{% url 'report_incident' %}" class="bg-white text-emerald-600 px-4 py-2 rounded-lg font-semibold hover:bg-emerald-50 transition-all text-sm whitespace-nowrap">
+                        <i class="fas fa-plus-circle mr-1"></i>Report Incident
+                    </a>
+                </div>
+            </div>
+
+            <!-- Quick Stats - Compact -->
+            <div class="grid grid-cols-3 gap-2">
+                {% if user.role == 'student' %}
+                <div class="bg-white rounded-lg p-3 shadow border border-emerald-100">
+                    <div class="flex items-center gap-2">
+                        <div class="bg-orange-100 p-2 rounded-lg">
+                            <i class="fas fa-clock text-orange-600 text-sm"></i>
+                        </div>
+                        <div>
+                            <p class="text-xs text-gray-500">Pending</p>
+                            <p class="text-xl font-bold text-orange-600">{{ pending_reports|default:0 }}</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-white rounded-lg p-3 shadow border border-emerald-100">
+                    <div class="flex items-center gap-2">
+                        <div class="bg-blue-100 p-2 rounded-lg">
+                            <i class="fas fa-search text-blue-600 text-sm"></i>
+                        </div>
+                        <div>
+                            <p class="text-xs text-gray-500">Review</p>
+                            <p class="text-xl font-bold text-blue-600">{{ under_review|default:0 }}</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-white rounded-lg p-3 shadow border border-emerald-100">
+                    <div class="flex items-center gap-2">
+                        <div class="bg-green-100 p-2 rounded-lg">
+                            <i class="fas fa-check-circle text-green-600 text-sm"></i>
+                        </div>
+                        <div>
+                            <p class="text-xs text-gray-500">Resolved</p>
+                            <p class="text-xl font-bold text-green-600">{{ resolved|default:0 }}</p>
+                        </div>
+                    </div>
+                </div>
+                {% else %}
+                <div class="bg-white rounded-lg p-3 shadow border border-emerald-100">
+                    <div class="flex items-center gap-2">
+                        <div class="bg-emerald-100 p-2 rounded-lg">
+                            <i class="fas fa-file-alt text-emerald-600 text-sm"></i>
+                        </div>
+                        <div>
+                            <p class="text-xs text-gray-500">Total</p>
+                            <p class="text-xl font-bold text-emerald-600">{{ total_reports|default:0 }}</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-white rounded-lg p-3 shadow border border-emerald-100">
+                    <div class="flex items-center gap-2">
+                        <div class="bg-orange-100 p-2 rounded-lg">
+                            <i class="fas fa-hourglass-half text-orange-600 text-sm"></i>
+                        </div>
+                        <div>
+                            <p class="text-xs text-gray-500">Pending</p>
+                            <p class="text-xl font-bold text-orange-600">{{ pending|default:0 }}</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-white rounded-lg p-3 shadow border border-emerald-100">
+                    <div class="flex items-center gap-2">
+                        <div class="bg-blue-100 p-2 rounded-lg">
+                            <i class="fas fa-calendar-alt text-blue-600 text-sm"></i>
+                        </div>
+                        <div>
+                            <p class="text-xs text-gray-500">This Month</p>
+                            <p class="text-xl font-bold text-blue-600">{{ recent_reports|length|default:0 }}</p>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- How to Report & Rights/Guidelines Combined -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-3">
+                <!-- How to Report -->
+                <div class="bg-white rounded-lg p-3 shadow border border-emerald-100">
+                    <h2 class="text-sm font-bold text-gray-800 mb-2 flex items-center">
+                        <i class="fas fa-info-circle text-emerald-600 mr-1 text-xs"></i>
+                        How to Report
+                    </h2>
+                    <div class="grid grid-cols-5 gap-1">
+                        <div class="bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg p-2 text-white text-center">
+                            <div class="text-lg font-bold">1</div>
+                            <p class="text-xs">Click</p>
+                        </div>
+                        <div class="bg-gradient-to-br from-green-500 to-green-600 rounded-lg p-2 text-white text-center">
+                            <div class="text-lg font-bold">2</div>
+                            <p class="text-xs">Fill</p>
+                        </div>
+                        <div class="bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg p-2 text-white text-center">
+                            <div class="text-lg font-bold">3</div>
+                            <p class="text-xs">Evidence</p>
+                        </div>
+                        <div class="bg-gradient-to-br from-orange-500 to-orange-600 rounded-lg p-2 text-white text-center">
+                            <div class="text-lg font-bold">4</div>
+                            <p class="text-xs">Submit</p>
+                        </div>
+                        <div class="bg-gradient-to-br from-red-500 to-red-600 rounded-lg p-2 text-white text-center">
+                            <div class="text-lg font-bold">5</div>
+                            <p class="text-xs">Track</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Rights/Guidelines -->
+                <div class="bg-white rounded-lg p-3 shadow border border-emerald-100">
+                    <h2 class="text-sm font-bold text-gray-800 mb-2 flex items-center">
+                        <i class="fas fa-balance-scale text-emerald-600 mr-1 text-xs"></i>
+                        {% if user.role == 'student' %}Your Rights{% else %}Guidelines{% endif %}
+                    </h2>
+                    <div class="grid grid-cols-2 gap-2">
+                        <div class="flex items-start gap-2 p-2 bg-emerald-50 rounded-lg">
+                            <i class="fas fa-shield-alt text-emerald-600 text-xs mt-0.5"></i>
+                            <div>
+                                <p class="text-xs font-semibold text-gray-800">{% if user.role == 'student' %}Be Heard{% else %}Objective{% endif %}</p>
+                            </div>
+                        </div>
+                        <div class="flex items-start gap-2 p-2 bg-blue-50 rounded-lg">
+                            <i class="fas fa-user-lock text-blue-600 text-xs mt-0.5"></i>
+                            <div>
+                                <p class="text-xs font-semibold text-gray-800">{% if user.role == 'student' %}Confidential{% else %}Privacy{% endif %}</p>
+                            </div>
+                        </div>
+                        <div class="flex items-start gap-2 p-2 bg-purple-50 rounded-lg">
+                            <i class="fas fa-hands-helping text-purple-600 text-xs mt-0.5"></i>
+                            <div>
+                                <p class="text-xs font-semibold text-gray-800">{% if user.role == 'student' %}Support{% else %}Timely{% endif %}</p>
+                            </div>
+                        </div>
+                        <div class="flex items-start gap-2 p-2 bg-orange-50 rounded-lg">
+                            <i class="fas fa-gavel text-orange-600 text-xs mt-0.5"></i>
+                            <div>
+                                <p class="text-xs font-semibold text-gray-800">{% if user.role == 'student' %}Fair{% else %}Document{% endif %}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Guidance & Support - Compact -->
+            <div class="bg-white rounded-lg p-3 shadow border border-emerald-100">
+                <h2 class="text-sm font-bold text-gray-800 mb-2 flex items-center">
+                    <i class="fas fa-headset text-emerald-600 mr-1 text-xs"></i>
+                    Need Help?
+                </h2>
+                <div class="grid grid-cols-2 lg:grid-cols-4 gap-2">
+                    <div class="bg-gradient-to-br from-emerald-500 to-teal-600 rounded-lg p-2 text-white text-center">
+                        <i class="fas fa-user-tie text-xl mb-1"></i>
+                        <p class="text-xs font-semibold">Discipline Office</p>
+                        <p class="text-xs opacity-90">Room 201</p>
+                    </div>
+                    <div class="bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg p-2 text-white text-center">
+                        <i class="fas fa-heart text-xl mb-1"></i>
+                        <p class="text-xs font-semibold">Guidance Office</p>
+                        <p class="text-xs opacity-90">Room 105</p>
+                    </div>
+                    <div class="bg-gradient-to-br from-purple-500 to-pink-600 rounded-lg p-2 text-white text-center">
+                        <i class="fas fa-phone-alt text-xl mb-1"></i>
+                        <p class="text-xs font-semibold">Hotline</p>
+                        <p class="text-xs opacity-90">0917-XXX-XXXX</p>
+                    </div>
+                    <div class="bg-gradient-to-br from-orange-500 to-red-600 rounded-lg p-2 text-white text-center">
+                        <i class="fas fa-envelope text-xl mb-1"></i>
+                        <p class="text-xs font-semibold">Email</p>
+                        <p class="text-xs opacity-90">support@school.edu</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Reports - Compact -->
+            {% if recent_reports %}
+            <div class="bg-white rounded-lg p-3 shadow border border-emerald-100">
+                <div class="flex items-center justify-between mb-2">
+                    <h2 class="text-sm font-bold text-gray-800 flex items-center">
+                        <i class="fas fa-history text-emerald-600 mr-1 text-xs"></i>
+                        Recent Reports
+                    </h2>
+                    <a href="{% url 'my_reports' %}" class="text-xs text-emerald-600 hover:text-emerald-700 font-medium">View All →</a>
+                </div>
+                <div class="space-y-1.5 max-h-48 overflow-y-auto">
+                    {% for report in recent_reports|slice:":5" %}
+                    <a href="{% url 'report_detail' report.case_id %}" class="block p-2 bg-gray-50 rounded-lg hover:bg-emerald-50 transition-colors">
+                        <div class="flex items-center justify-between gap-2">
+                            <div class="flex-1 min-w-0">
+                                <p class="font-semibold text-gray-800 text-xs truncate">{{ report.case_id }}</p>
+                                <p class="text-xs text-gray-600 truncate">{{ report.incident_type.name|truncatewords:4 }}</p>
+                            </div>
+                            <div class="text-right flex-shrink-0">
+                                <span class="px-2 py-0.5 rounded-full text-xs font-medium whitespace-nowrap
+                                    {% if report.status == 'pending' %}bg-yellow-100 text-yellow-800
+                                    {% elif report.status == 'under_review' %}bg-blue-100 text-blue-800
+                                    {% elif report.status == 'resolved' %}bg-green-100 text-green-800
+                                    {% else %}bg-gray-100 text-gray-800{% endif %}">
+                                    {{ report.get_status_display|truncatewords:1 }}
+                                </span>
+                                <p class="text-xs text-gray-500 mt-0.5">{{ report.created_at|date:"M d" }}</p>
+                            </div>
+                        </div>
+                    </a>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+        </div>
+    </div>
+    
+    {% elif user.role == 'do' or user.role == 'counselor' or user.role == 'esp_teacher' %}
+    
+    <!-- Header with Filter -->
+    <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-4 gap-3">
+        <h1 class="text-2xl font-bold text-gray-800">
+            {% if user.role == 'do' %}📊 Discipline Office Dashboard
+            {% elif user.role == 'counselor' %}📊 Guidance Dashboard
+            {% else %}📊 ESP Teacher Dashboard{% endif %}
+        </h1>
+        <div class="flex items-center gap-3">
+            {% if user.role == 'do' or user.role == 'counselor' %}
+            <a href="{% url 'generate_narrative_report' %}" 
+               class="inline-flex items-center px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-lg transition-colors shadow-sm text-sm">
+                <i class="fas fa-file-word mr-2"></i>
+                Download Narrative Report
+            </a>
+            {% endif %}
+            <select id="timeFilter" class="border border-emerald-300 rounded-lg px-4 py-2 text-sm bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                <option value="monthly" selected>Monthly View</option>
+                <option value="quarterly">Quarterly View</option>
+                <option value="yearly">Yearly View</option>
+            </select>
+        </div>
+    </div>
+
+    <!-- Counter Cards - Compact -->
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
+        {% if user.role == 'do' %}
+        <div class="bg-white rounded-xl p-4 shadow-md border-l-4 border-emerald-500 hover:shadow-lg transition-shadow">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-xs text-gray-500 uppercase tracking-wide font-medium">Total Reports</p>
+                    <p class="text-2xl font-bold text-gray-800 mt-1">{{ total_reports|default:0 }}</p>
+                </div>
+                <div class="bg-emerald-100 p-3 rounded-lg">
+                    <i class="fas fa-file-alt text-emerald-600 text-xl"></i>
+                </div>
+            </div>
+        </div>
+        <div class="bg-white rounded-xl p-4 shadow-md border-l-4 border-orange-500 hover:shadow-lg transition-shadow">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-xs text-gray-500 uppercase tracking-wide font-medium">Pending</p>
+                    <p class="text-2xl font-bold text-gray-800 mt-1">{{ pending|default:0 }}</p>
+                </div>
+                <div class="bg-orange-100 p-3 rounded-lg">
+                    <i class="fas fa-clock text-orange-600 text-xl"></i>
+                </div>
+            </div>
+        </div>
+        <div class="bg-white rounded-xl p-4 shadow-md border-l-4 border-blue-500 hover:shadow-lg transition-shadow">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-xs text-gray-500 uppercase tracking-wide font-medium">Handled by DO</p>
+                    <p class="text-2xl font-bold text-gray-800 mt-1">{{ minor_cases_count|default:0 }}</p>
+                </div>
+                <div class="bg-blue-100 p-3 rounded-lg">
+                    <i class="fas fa-check-circle text-blue-600 text-xl"></i>
+                </div>
+            </div>
+        </div>
+        <div class="bg-white rounded-xl p-4 shadow-md border-l-4 border-purple-500 hover:shadow-lg transition-shadow">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-xs text-gray-500 uppercase tracking-wide font-medium">Sent to Counselor</p>
+                    <p class="text-2xl font-bold text-gray-800 mt-1">{{ major_cases_count|default:0 }}</p>
+                </div>
+                <div class="bg-purple-100 p-3 rounded-lg">
+                    <i class="fas fa-arrow-right text-purple-600 text-xl"></i>
+                </div>
+            </div>
+        </div>
+        {% elif user.role == 'counselor' %}
+        <div class="bg-white rounded-xl p-4 shadow-md border-l-4 border-green-500 hover:shadow-lg transition-shadow">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-xs text-gray-500 uppercase tracking-wide font-medium">Handled by Guidance</p>
+                    <p class="text-2xl font-bold text-gray-800 mt-1">{{ minor_cases_count|default:0 }}</p>
+                </div>
+                <div class="bg-green-100 p-3 rounded-lg">
+                    <i class="fas fa-user-graduate text-green-600 text-xl"></i>
+                </div>
+            </div>
+        </div>
+        <a href="{% url 'all_reports' %}?type=prohibited" class="bg-white rounded-xl p-4 shadow-md border-l-4 border-red-500 hover:shadow-lg transition-shadow cursor-pointer">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-xs text-gray-500 uppercase tracking-wide font-medium">Prohibited Acts</p>
+                    <p class="text-2xl font-bold text-gray-800 mt-1">{{ total_prohibited_acts|default:0 }}</p>
+                </div>
+                <div class="bg-red-100 p-3 rounded-lg">
+                    <i class="fas fa-exclamation-triangle text-red-600 text-xl"></i>
+                </div>
+            </div>
+        </a>
+        <a href="{% url 'all_reports' %}?type=school_policy" class="bg-white rounded-xl p-4 shadow-md border-l-4 border-amber-500 hover:shadow-lg transition-shadow cursor-pointer">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-xs text-gray-500 uppercase tracking-wide font-medium">OSP Cases</p>
+                    <p class="text-2xl font-bold text-gray-800 mt-1">{{ total_osp|default:0 }}</p>
+                </div>
+                <div class="bg-amber-100 p-3 rounded-lg">
+                    <i class="fas fa-gavel text-amber-600 text-xl"></i>
+                </div>
+            </div>
+        </a>
+        <a href="{% url 'completed_reports' %}" class="bg-white rounded-xl p-4 shadow-md border-l-4 border-green-500 hover:shadow-lg transition-shadow cursor-pointer">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-xs text-gray-500 uppercase tracking-wide font-medium">Completed</p>
+                    <p class="text-2xl font-bold text-gray-800 mt-1">{{ completed_sessions|default:0 }}</p>
+                </div>
+                <div class="bg-green-100 p-3 rounded-lg">
+                    <i class="fas fa-check-double text-green-600 text-xl"></i>
+                </div>
+            </div>
+        </a>
+        {% elif user.role == 'esp_teacher' %}
+        <div class="bg-white rounded-xl p-4 shadow-md border-l-4 border-emerald-500 hover:shadow-lg transition-shadow">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-xs text-gray-500 uppercase tracking-wide font-medium">Total VRF</p>
+                    <p class="text-2xl font-bold text-gray-800 mt-1">{{ total_vrf_referrals|default:0 }}</p>
+                </div>
+                <div class="bg-emerald-100 p-3 rounded-lg">
+                    <i class="fas fa-users text-emerald-600 text-xl"></i>
+                </div>
+            </div>
+        </div>
+        <div class="bg-white rounded-xl p-4 shadow-md border-l-4 border-green-500 hover:shadow-lg transition-shadow">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-xs text-gray-500 uppercase tracking-wide font-medium">Completed</p>
+                    <p class="text-2xl font-bold text-gray-800 mt-1">{{ completed_vrf|default:0 }}</p>
+                </div>
+                <div class="bg-green-100 p-3 rounded-lg">
+                    <i class="fas fa-check-circle text-green-600 text-xl"></i>
+                </div>
+            </div>
+        </div>
+        <div class="bg-white rounded-xl p-4 shadow-md border-l-4 border-orange-500 hover:shadow-lg transition-shadow">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-xs text-gray-500 uppercase tracking-wide font-medium">Pending</p>
+                    <p class="text-2xl font-bold text-gray-800 mt-1">{{ pending_vrf|default:0 }}</p>
+                </div>
+                <div class="bg-orange-100 p-3 rounded-lg">
+                    <i class="fas fa-hourglass-half text-orange-600 text-xl"></i>
+                </div>
+            </div>
+        </div>
+        <div class="bg-white rounded-xl p-4 shadow-md border-l-4 border-blue-500 hover:shadow-lg transition-shadow">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-xs text-gray-500 uppercase tracking-wide font-medium">Scheduled</p>
+                    <p class="text-2xl font-bold text-gray-800 mt-1">{{ scheduled_vrf_sessions|default:0 }}</p>
+                </div>
+                <div class="bg-blue-100 p-3 rounded-lg">
+                    <i class="fas fa-calendar-alt text-blue-600 text-xl"></i>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Data Analytics Section - Power BI Style Professional Design -->
+    {% if user.role == 'do' or user.role == 'counselor' %}
+    <div class="mt-6 space-y-4">
+        <div class="bg-white rounded-lg shadow-md border border-gray-200 overflow-hidden">
+            <!-- Chart 1: What Month Most Report (Top) -->
+            <div class="p-6 border-b border-gray-200">
+                <div class="mb-4">
+                    <h3 class="text-xl font-bold text-gray-800 mb-1">What Month Most Report</h3>
+                    <p class="text-sm text-gray-500">Distribution of incident reports across months</p>
+                </div>
+                <div class="chart-wrapper" style="height: 320px;">
+                    <canvas id="monthChart"></canvas>
+                </div>
+            </div>
+            <!-- Results Section for Monthly Trends -->
+            <div class="p-4 bg-gray-50 border-t border-gray-200">
+                <h4 class="text-sm font-semibold text-gray-700 mb-2">Results:</h4>
+                <p class="text-sm text-gray-600" data-narrative="trend">
+                    {% if trend_narrative %}{{ trend_narrative }}{% else %}No data available.{% endif %}
+                </p>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-lg shadow-md border border-gray-200 overflow-hidden">
+            <!-- Chart 2: Reports by Grade Level (Middle) -->
+            <div class="p-6 border-b border-gray-200">
+                <div class="mb-4">
+                    <h3 class="text-xl font-bold text-gray-800 mb-1">Reports by Grade Level</h3>
+                    <p class="text-sm text-gray-500">Number of incident reports by grade level</p>
+                </div>
+                <div class="chart-wrapper" style="height: 320px;">
+                    <canvas id="gradeChart"></canvas>
+                </div>
+            </div>
+            <!-- Results Section for Grade Distribution -->
+            <div class="p-4 bg-gray-50 border-t border-gray-200">
+                <h4 class="text-sm font-semibold text-gray-700 mb-2">Results:</h4>
+                <p class="text-sm text-gray-600" data-narrative="grade">
+                    {% if grade_narrative %}{{ grade_narrative }}{% else %}No data available.{% endif %}
+                </p>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-lg shadow-md border border-gray-200 overflow-hidden">
+            <!-- Chart 3: Prohibited Acts vs. Other School Policies (Bottom) -->
+            <div class="p-6 border-b border-gray-200">
+                <div class="mb-4">
+                    <h3 class="text-xl font-bold text-gray-800 mb-1">Prohibited Acts vs. Other School Policies Reported</h3>
+                    <p class="text-sm text-gray-500">Distribution of prohibited acts versus other school policy violations</p>
+                </div>
+                <div class="chart-wrapper" style="height: 320px;">
+                    <canvas id="violationChart"></canvas>
+                </div>
+            </div>
+            <!-- Results Section for Violation Types -->
+            <div class="p-4 bg-gray-50 border-t border-gray-200">
+                <h4 class="text-sm font-semibold text-gray-700 mb-2">Results:</h4>
+                <p class="text-sm text-gray-600" data-narrative="violation">
+                    {% if violation_narrative %}{{ violation_narrative }}{% else %}No data available.{% endif %}
+                </p>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Frequency Analytics and Reporter Breakdown Charts -->
+    <div class="mt-6 space-y-4">
+        
+        <!-- Chart: Incident Frequency Over Time -->
+        <div class="bg-white rounded-lg shadow-md border border-gray-200 overflow-hidden">
+            <div class="p-6 border-b border-gray-200">
+                <div class="mb-4 flex justify-between items-center">
+                    <div>
+                        <h3 class="text-xl font-bold text-gray-800 mb-1">Incident Frequency Analytics</h3>
+                        <p class="text-sm text-gray-500">Frequency of incident reports over time</p>
+                    </div>
+                    <select id="frequencyTimeFilter" class="border border-gray-300 rounded-lg px-3 py-1.5 text-sm bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                        <option value="daily" selected>Daily View</option>
+                        <option value="weekly">Weekly View</option>
+                        <option value="monthly">Monthly View</option>
+                        <option value="yearly">Yearly View</option>
+                    </select>
+                </div>
+                <div class="chart-wrapper" style="height: 400px; position: relative;">
+                    <canvas id="frequencyChart"></canvas>
+                    <div id="frequencyChartLoading" class="absolute inset-0 flex items-center justify-center bg-white bg-opacity-75">
+                        <div class="text-center">
+                            <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-2"></div>
+                            <p class="text-sm text-gray-600">Loading chart data...</p>
+                        </div>
+                    </div>
+                    <div id="frequencyChartEmpty" class="absolute inset-0 flex items-center justify-center bg-gray-50 hidden">
+                        <div class="text-center p-6">
+                            <i class="fas fa-chart-line text-4xl text-gray-300 mb-3"></i>
+                            <p class="text-gray-500 font-medium">No frequency data available</p>
+                            <p class="text-sm text-gray-400 mt-1">Data will appear here once reports are created</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Chart: Reporter Breakdown (Student vs Teacher) -->
+        <div class="bg-white rounded-lg shadow-md border border-gray-200 overflow-hidden">
+            <div class="p-6 border-b border-gray-200">
+                <div class="mb-4 flex justify-between items-center">
+                    <div>
+                        <h3 class="text-xl font-bold text-gray-800 mb-1">Reporter Breakdown Analytics</h3>
+                        <p class="text-sm text-gray-500">Percentage of reports by student vs teacher over time</p>
+                    </div>
+                    <select id="reporterTimeFilter" class="border border-gray-300 rounded-lg px-3 py-1.5 text-sm bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                        <option value="daily" selected>Daily View</option>
+                        <option value="weekly">Weekly View</option>
+                        <option value="monthly">Monthly View</option>
+                        <option value="yearly">Yearly View</option>
+                    </select>
+                </div>
+                <div class="chart-wrapper" style="height: 350px;">
+                    <canvas id="reporterChart"></canvas>
+                </div>
+                <div class="mt-4 p-4 bg-gray-50 rounded-lg">
+                    <div class="grid grid-cols-2 gap-4 text-center">
+                        <div>
+                            <p class="text-sm text-gray-600">Total Student Reports</p>
+                            <p class="text-2xl font-bold text-blue-600" id="totalStudentReports">0</p>
+                            <p class="text-xs text-gray-500" id="studentReportPct">0%</p>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-600">Total Teacher Reports</p>
+                            <p class="text-2xl font-bold text-green-600" id="totalTeacherReports">0</p>
+                            <p class="text-xs text-gray-500" id="teacherReportPct">0%</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+
+    {% if user.role == 'esp_teacher' %}
+    <!-- ESP Teacher Analytics -->
+    <div class="mt-6 space-y-4">
+        <!-- Chart 1: VRF Status Distribution -->
+        <div class="bg-white rounded-lg shadow-md border border-gray-200 overflow-hidden">
+            <div class="p-6 border-b border-gray-200">
+                <div class="mb-4">
+                    <h3 class="text-xl font-bold text-gray-800 mb-1">VRF Status Distribution</h3>
+                    <p class="text-sm text-gray-500">Distribution of VRF cases by status</p>
+                </div>
+                <div class="chart-wrapper" style="height: 320px;">
+                    <canvas id="statusChart"></canvas>
+                </div>
+            </div>
+            <!-- Narrative Report Section for Status Distribution -->
+            <div class="p-6 bg-gradient-to-r from-emerald-50 to-teal-50 border-t border-gray-200">
+                <div class="flex items-start space-x-4">
+                    <div class="flex-shrink-0 mt-1">
+                        <div class="bg-emerald-100 rounded-full p-3">
+                            <i class="fas fa-file-alt text-emerald-600 text-xl"></i>
+                        </div>
+                    </div>
+                    <div class="flex-1">
+                        <h4 class="text-base font-bold text-gray-800 mb-3 flex items-center">
+                            <i class="fas fa-chart-pie mr-2 text-emerald-600"></i>
+                            Narrative Analysis - VRF Status Distribution
+                        </h4>
+                        <div class="bg-white rounded-lg p-4 shadow-sm border border-emerald-100">
+                            <p class="text-sm text-gray-700 leading-relaxed text-justify">
+                                {% if vrf_status_narrative %}{{ vrf_status_narrative }}{% else %}The VRF Status Distribution chart displays the breakdown of VRF cases by their current status. This visualization helps ESP teachers understand their workload distribution, identify cases that need attention, and track completion rates. The chart shows completed, pending, ongoing, and scheduled cases, providing a comprehensive view of case management status.{% endif %}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Chart 2: Most Incident refers to ESP For VRF -->
+        <div class="bg-white rounded-lg shadow-md border border-gray-200 overflow-hidden">
+            <div class="p-6 border-b border-gray-200">
+                <div class="mb-4">
+                    <h3 class="text-xl font-bold text-gray-800 mb-1">Most Incident refers to ESP For VRF</h3>
+                    <p class="text-sm text-gray-500">Trend of VRF referrals over time</p>
+                </div>
+                <div class="chart-wrapper" style="height: 320px;">
+                    <canvas id="referralChart"></canvas>
+                </div>
+            </div>
+            <!-- Narrative Report Section for VRF Referral Trend -->
+            <div class="p-6 bg-gradient-to-r from-blue-50 to-indigo-50 border-t border-gray-200">
+                <div class="flex items-start space-x-4">
+                    <div class="flex-shrink-0 mt-1">
+                        <div class="bg-indigo-100 rounded-full p-3">
+                            <i class="fas fa-file-alt text-indigo-600 text-xl"></i>
+                        </div>
+                    </div>
+                    <div class="flex-1">
+                        <h4 class="text-base font-bold text-gray-800 mb-3 flex items-center">
+                            <i class="fas fa-chart-line mr-2 text-indigo-600"></i>
+                            Narrative Analysis - Trend of VRF Referrals Over Time
+                        </h4>
+                        <div class="bg-white rounded-lg p-4 shadow-sm border border-indigo-100">
+                            <p class="text-sm text-gray-700 leading-relaxed text-justify">
+                                {% if vrf_trend_narrative %}{{ vrf_trend_narrative }}{% else %}The VRF Referral Trend chart illustrates the pattern of VRF case assignments over the past 12 months. This visualization helps identify seasonal patterns, peak referral periods, and trends in Values Reflective Formation case volume. Understanding these trends enables better resource planning, workload management, and proactive scheduling of VRF sessions.{% endif %}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+    
+    {% endif %}
+</div>
+
+{% load static %}
+<script src="{% static 'js/chart.js' %}"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+// Global chart instances
+let gradeChartInstance = null;
+let monthChartInstance = null;
+let violationChartInstance = null;
+let statusChartInstance = null;
+let referralChartInstance = null;
+let frequencyChartInstance = null;
+let reporterChartInstance = null;
+
+// Wait for Chart.js to load
+function initCharts() {
+    if (typeof Chart === 'undefined') {
+        console.log('Waiting for Chart.js...');
+        setTimeout(initCharts, 100);
+        return;
+    }
+    
+    console.log('Chart.js ready!');
+    createDashboardCharts();
+    
+    // Add event listener for time filter
+    const timeFilter = document.getElementById('timeFilter');
+    if (timeFilter) {
+        timeFilter.addEventListener('change', function() {
+            updateDashboardData(this.value);
+        });
+    }
+    
+    // Add event listeners for frequency and reporter chart filters
+    const frequencyTimeFilter = document.getElementById('frequencyTimeFilter');
+    if (frequencyTimeFilter) {
+        frequencyTimeFilter.addEventListener('change', function() {
+            updateFrequencyChart(this.value);
+        });
+    }
+    
+    const reporterTimeFilter = document.getElementById('reporterTimeFilter');
+    if (reporterTimeFilter) {
+        reporterTimeFilter.addEventListener('change', function() {
+            updateReporterChart(this.value);
+        });
+    }
+    
+    // Initialize frequency and reporter charts
+    if (userRole === 'do' || userRole === 'counselor') {
+        console.log('Initializing frequency charts for role:', userRole);
+        // Small delay to ensure DOM is fully ready
+        setTimeout(function() {
+            createFrequencyCharts();
+        }, 100);
+    }
+}
+
+// Function to update dashboard data based on time filter
+function updateDashboardData(filter) {
+    console.log('Updating dashboard with filter:', filter);
+    
+    // Show loading state
+    const charts = document.querySelectorAll('canvas');
+    charts.forEach(canvas => {
+        canvas.style.opacity = '0.5';
+    });
+    
+    // Fetch new data from API
+    fetch(`/api/dashboard-analytics/?filter=${filter}`)
+        .then(response => response.json())
+        .then(data => {
+            console.log('Received data:', data);
+            
+            // Update charts with new data
+            updateCharts(data);
+            
+            // Update narratives if provided
+            if (data.narratives) {
+                updateNarratives(data.narratives);
+            }
+            
+            // Update metrics if provided
+            if (data.metrics) {
+                updateMetrics(data.metrics);
+            }
+            
+            // Remove loading state
+            charts.forEach(canvas => {
+                canvas.style.opacity = '1';
+            });
+        })
+        .catch(error => {
+            console.error('Error fetching dashboard data:', error);
+            charts.forEach(canvas => {
+                canvas.style.opacity = '1';
+            });
+        });
+}
+
+// Function to update narratives
+function updateNarratives(narratives) {
+    // Update trend narrative
+    const trendNarrativeElement = document.querySelector('[data-narrative="trend"]');
+    if (trendNarrativeElement && narratives.trend_narrative) {
+        trendNarrativeElement.textContent = narratives.trend_narrative;
+    }
+    
+    // Update grade narrative
+    const gradeNarrativeElement = document.querySelector('[data-narrative="grade"]');
+    if (gradeNarrativeElement && narratives.grade_narrative) {
+        gradeNarrativeElement.textContent = narratives.grade_narrative;
+    }
+    
+    // Update violation narrative
+    const violationNarrativeElement = document.querySelector('[data-narrative="violation"]');
+    if (violationNarrativeElement && narratives.violation_narrative) {
+        violationNarrativeElement.textContent = narratives.violation_narrative;
+    }
+}
+
+// Function to update metric cards
+function updateMetrics(metrics) {
+    const userRole = '{{ user.role }}';
+    
+    // Update based on role
+    if (userRole === 'do') {
+        // Update DO metrics (if needed)
+    } else if (userRole === 'counselor') {
+        // Update counselor metrics (if needed)
+    } else if (userRole === 'esp_teacher') {
+        // Update ESP metrics (if needed)
+    }
+}
+
+// Function to update existing charts with new data
+function updateCharts(data) {
+    const userRole = '{{ user.role }}';
+    
+    if (userRole === 'do' || userRole === 'counselor') {
+        // Update month chart (What Month Most Report - Top)
+        if (monthChartInstance && data.month_data) {
+            monthChartInstance.data.labels = data.month_data.map(d => d.month);
+            monthChartInstance.data.datasets[0].data = data.month_data.map(d => d.reports);
+            monthChartInstance.update();
+        }
+        
+        // Update grade chart (Reports by Grade Level - Middle)
+        if (gradeChartInstance && data.grade_data) {
+            gradeChartInstance.data.labels = data.grade_data.map(d => d.grade.replace('Grade ', 'G'));
+            gradeChartInstance.data.datasets[0].data = data.grade_data.map(d => d.count);
+            gradeChartInstance.update();
+        }
+        
+        // Update violation chart (Prohibited Acts vs Other School Policies - Bottom)
+        if (violationChartInstance && data.violation_type_data) {
+            violationChartInstance.data.labels = data.violation_type_data.map(d => d.name);
+            violationChartInstance.data.datasets[0].data = data.violation_type_data.map(d => d.value);
+            violationChartInstance.update();
+        }
+    }
+    
+    if (userRole === 'esp_teacher') {
+        // Update status donut chart
+        if (statusChartInstance && data.status_data) {
+            statusChartInstance.data.datasets[0].data = [
+                data.status_data.completed || 0,
+                data.status_data.pending || 0,
+                data.status_data.ongoing || 0,
+                data.status_data.scheduled || 0
+            ];
+            statusChartInstance.update();
+        }
+        
+        // Update VRF referral trend chart
+        if (referralChartInstance && data.vrf_trend_data) {
+            referralChartInstance.data.labels = data.vrf_trend_data.map(d => d.month);
+            referralChartInstance.data.datasets[0].data = data.vrf_trend_data.map(d => d.reports);
+            referralChartInstance.update();
+        }
+    }
+}
+
+function createDashboardCharts() {
+    console.log('=== Dashboard Loading ===');
+    console.log('Chart.js loaded:', typeof Chart !== 'undefined');
+    
+    const userRole = '{{ user.role }}';
+    console.log('User role:', userRole);
+    
+    // Get data from backend (safely)
+    let trendData = [];
+    let gradeData = [];
+    let monthData = [];
+    let vrfTrendData = [];
+    
+    try {
+        const rawTrendData = '{{ trend_data|safe }}';
+        const rawGradeData = '{{ grade_data|safe }}';
+        const rawMonthData = '{{ month_data|safe }}';
+        const rawVrfTrendData = '{{ vrf_trend_data|safe }}';
+        
+        console.log('Raw trend data length:', rawTrendData ? rawTrendData.length : 0);
+        console.log('Raw grade data length:', rawGradeData ? rawGradeData.length : 0);
+        console.log('Raw month data length:', rawMonthData ? rawMonthData.length : 0);
+        console.log('User role:', userRole);
+        
+        // Parse data with better error handling
+        if (rawTrendData && rawTrendData.trim() && rawTrendData !== 'null' && rawTrendData !== '[]') {
+            try {
+                trendData = JSON.parse(rawTrendData);
+            } catch(e) {
+                console.error('Error parsing trend data:', e);
+            }
+        }
+        if (rawGradeData && rawGradeData.trim() && rawGradeData !== 'null' && rawGradeData !== '[]') {
+            try {
+                gradeData = JSON.parse(rawGradeData);
+            } catch(e) {
+                console.error('Error parsing grade data:', e);
+            }
+        }
+        if (rawMonthData && rawMonthData.trim() && rawMonthData !== 'null' && rawMonthData !== '[]') {
+            try {
+                monthData = JSON.parse(rawMonthData);
+            } catch(e) {
+                console.error('Error parsing month data:', e);
+            }
+        }
+        if (rawVrfTrendData && rawVrfTrendData.trim() && rawVrfTrendData !== 'null' && rawVrfTrendData !== '[]') {
+            try {
+                vrfTrendData = JSON.parse(rawVrfTrendData);
+            } catch(e) {
+                console.error('Error parsing VRF trend data:', e);
+            }
+        }
+        
+        console.log('Parsed trend data:', trendData.length, 'items');
+        console.log('Parsed grade data:', gradeData.length, 'items');
+        console.log('Parsed month data:', monthData.length, 'items');
+        console.log('Sample trend data:', trendData.slice(0, 3));
+        console.log('Sample grade data:', gradeData.slice(0, 3));
+    } catch(e) {
+        console.error('Data loading error:', e);
+        // Use sample data if parsing fails
+        trendData = [
+            {month: 'Jan', reports: 5},
+            {month: 'Feb', reports: 8},
+            {month: 'Mar', reports: 3},
+            {month: 'Apr', reports: 12},
+            {month: 'May', reports: 7},
+            {month: 'Jun', reports: 9}
+        ];
+        gradeData = [
+            {grade: 'Grade 7', count: 3},
+            {grade: 'Grade 8', count: 5},
+            {grade: 'Grade 9', count: 2},
+            {grade: 'Grade 10', count: 4},
+            {grade: 'Grade 11', count: 6},
+            {grade: 'Grade 12', count: 1}
+        ];
+        monthData = [
+            {month: 'Jan', reports: 5},
+            {month: 'Feb', reports: 8},
+            {month: 'Mar', reports: 3},
+            {month: 'Apr', reports: 12},
+            {month: 'May', reports: 7},
+            {month: 'Jun', reports: 9},
+            {month: 'Jul', reports: 4},
+            {month: 'Aug', reports: 6},
+            {month: 'Sep', reports: 8},
+            {month: 'Oct', reports: 10},
+            {month: 'Nov', reports: 7},
+            {month: 'Dec', reports: 5}
+        ];
+        console.log('Using sample data');
+    }
+    
+    // Chart configuration
+    const chartConfig = {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: { 
+                display: false
+            },
+            tooltip: {
+                backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                padding: 12,
+                titleFont: { size: 12 },
+                bodyFont: { size: 11 }
+            }
+        },
+        scales: {
+            y: { 
+                beginAtZero: true,
+                grid: {
+                    color: 'rgba(0, 0, 0, 0.05)'
+                },
+                ticks: { 
+                    font: { size: 10 },
+                    color: '#6B7280'
+                }
+            },
+            x: {
+                grid: {
+                    display: false
+                },
+                ticks: { 
+                    font: { size: 10 },
+                    color: '#6B7280'
+                }
+            }
+        }
+    };
+    
+    if (userRole === 'do' || userRole === 'counselor') {
+        console.log('Creating DO/Counselor charts...');
+        
+        // Get violation type data
+        let violationTypeData = [];
+        try {
+            const rawViolationData = '{{ violation_type_data|safe }}';
+            violationTypeData = JSON.parse(rawViolationData || '[]');
+        } catch(e) {
+            console.error('Error parsing violation type data:', e);
+            violationTypeData = [
+                {name: 'Prohibited Acts', value: 0},
+                {name: 'Other School Policies', value: 0}
+            ];
+        }
+        
+        // Chart 1: What Month Most Report (Top) - Wave/Line Graph
+        monthChartInstance = new Chart(document.getElementById('monthChart'), {
+            type: 'line',
+            data: {
+                labels: monthData.map(d => d.month),
+                datasets: [{
+                    label: 'Number of Reports',
+                    data: monthData.map(d => d.reports),
+                    borderColor: '#2563EB',
+                    backgroundColor: 'rgba(37, 99, 235, 0.1)',
+                    borderWidth: 3,
+                    fill: true,
+                    tension: 0.4,
+                    pointRadius: 5,
+                    pointHoverRadius: 7,
+                    pointBackgroundColor: '#2563EB',
+                    pointBorderColor: '#fff',
+                    pointBorderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: true,
+                        position: 'top',
+                        labels: {
+                            font: { size: 13, weight: '600' },
+                            padding: 15,
+                            usePointStyle: true
+                        }
+                    },
+                    tooltip: {
+                        backgroundColor: 'rgba(0, 0, 0, 0.85)',
+                        padding: 12,
+                        titleFont: { size: 13, weight: 'bold' },
+                        bodyFont: { size: 12 },
+                        cornerRadius: 6
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        grid: { 
+                            color: 'rgba(0, 0, 0, 0.05)',
+                            drawBorder: false
+                        },
+                        ticks: { 
+                            font: { size: 11 },
+                            color: '#6B7280'
+                        }
+                    },
+                    x: {
+                        grid: { 
+                            display: false,
+                            drawBorder: false
+                        },
+                        ticks: { 
+                            font: { size: 11 },
+                            color: '#6B7280'
+                        }
+                    }
+                }
+            }
+        });
+        
+        // Chart 2: Reports by Grade Level (Middle) - Bar Chart
+        const maxGradeCount = Math.max(...gradeData.map(d => d.count), 1);
+        const yAxisMax = Math.ceil(maxGradeCount / 2) * 2 + 2;
+        
+        gradeChartInstance = new Chart(document.getElementById('gradeChart'), {
+            type: 'bar',
+            data: {
+                labels: gradeData.map(d => d.grade.replace('Grade ', 'G')),
+                datasets: [{
+                    label: 'Number of Reports',
+                    data: gradeData.map(d => d.count),
+                    backgroundColor: '#10B981',
+                    borderRadius: 6,
+                    barThickness: 40,
+                    hoverBackgroundColor: '#059669'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: true,
+                        position: 'top',
+                        labels: {
+                            font: { size: 13, weight: '600' },
+                            padding: 15,
+                            usePointStyle: true
+                        }
+                    },
+                    tooltip: {
+                        backgroundColor: 'rgba(0, 0, 0, 0.85)',
+                        padding: 12,
+                        titleFont: { size: 13, weight: 'bold' },
+                        bodyFont: { size: 12 },
+                        cornerRadius: 6
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        max: yAxisMax,
+                        grid: { 
+                            color: 'rgba(0, 0, 0, 0.05)',
+                            drawBorder: false
+                        },
+                        ticks: {
+                            stepSize: 2,
+                            font: { size: 11 },
+                            color: '#6B7280'
+                        }
+                    },
+                    x: {
+                        grid: { 
+                            display: false,
+                            drawBorder: false
+                        },
+                        ticks: { 
+                            font: { size: 11 },
+                            color: '#6B7280'
+                        }
+                    }
+                }
+            }
+        });
+        
+        // Chart 3: Prohibited Acts vs. Other School Policies (Bottom) - Pie Chart
+        violationChartInstance = new Chart(document.getElementById('violationChart'), {
+            type: 'pie',
+            data: {
+                labels: violationTypeData.map(d => d.name),
+                datasets: [{
+                    data: violationTypeData.map(d => d.value),
+                    backgroundColor: ['#DC2626', '#3B82F6'],
+                    borderWidth: 3,
+                    borderColor: '#fff',
+                    hoverOffset: 8
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            boxWidth: 18,
+                            padding: 20,
+                            font: { size: 13, weight: '600' },
+                            usePointStyle: true,
+                            pointStyle: 'circle'
+                        }
+                    },
+                    tooltip: {
+                        backgroundColor: 'rgba(0, 0, 0, 0.85)',
+                        padding: 12,
+                        titleFont: { size: 13, weight: 'bold' },
+                        bodyFont: { size: 12 },
+                        cornerRadius: 6,
+                        callbacks: {
+                            label: function(context) {
+                                const label = context.label || '';
+                                const value = context.parsed || 0;
+                                const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : 0;
+                                return `${label}: ${value} (${percentage}%)`;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
+    
+    if (userRole === 'esp_teacher') {
+        // Status Donut
+        statusChartInstance = new Chart(document.getElementById('statusChart'), {
+            type: 'doughnut',
+            data: {
+                labels: ['Completed', 'Pending', 'Ongoing', 'Scheduled'],
+                datasets: [{
+                    data: [
+                        {{ completed_vrf|default:0 }},
+                        {{ pending_vrf|default:0 }},
+                        {{ ongoing_vrf|default:0 }},
+                        {{ scheduled_vrf|default:0 }}
+                    ],
+                    backgroundColor: [
+                        'rgba(34, 197, 94, 0.85)',
+                        'rgba(251, 146, 60, 0.85)',
+                        'rgba(59, 130, 246, 0.85)',
+                        'rgba(147, 51, 234, 0.85)'
+                    ],
+                    borderWidth: 2,
+                    borderColor: '#fff',
+                    hoverOffset: 8
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: { 
+                            font: { size: 11 },
+                            padding: 12,
+                            usePointStyle: true,
+                            pointStyle: 'circle'
+                        }
+                    },
+                    tooltip: {
+                        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                        padding: 12,
+                        titleFont: { size: 12 },
+                        bodyFont: { size: 11 }
+                    }
+                }
+            }
+        });
+        
+        // Most Incident refers to ESP For VRF - WAVE/LINE GRAPH
+        const vrfLabels = vrfTrendData.length > 0 ? vrfTrendData.map(d => d.month) : ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        const vrfData = vrfTrendData.length > 0 ? vrfTrendData.map(d => d.reports) : [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+        
+        referralChartInstance = new Chart(document.getElementById('referralChart'), {
+            type: 'line',
+            data: {
+                labels: vrfLabels,
+                datasets: [{
+                    label: 'VRF Referrals',
+                    data: vrfData,
+                    borderColor: 'rgb(59, 130, 246)',
+                    backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                    tension: 0.4,
+                    fill: true,
+                    borderWidth: 3,
+                    pointRadius: 4,
+                    pointHoverRadius: 6,
+                    pointBackgroundColor: 'rgb(59, 130, 246)',
+                    pointBorderColor: '#fff',
+                    pointBorderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: true,
+                        position: 'top',
+                        labels: {
+                            font: { size: 12, weight: 'bold' }
+                        }
+                    },
+                    tooltip: {
+                        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                        padding: 12,
+                        titleFont: { size: 12 },
+                        bodyFont: { size: 11 }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'Number of VRF Referrals',
+                            font: { size: 12, weight: 'bold' }
+                        },
+                        grid: { color: '#f0f0f0' },
+                        ticks: { font: { size: 11 } }
+                    },
+                    x: {
+                        title: {
+                            display: true,
+                            text: 'Time Period',
+                            font: { size: 12, weight: 'bold' }
+                        },
+                        grid: { color: '#f0f0f0' },
+                        ticks: { font: { size: 11 } }
+                    }
+                }
+            }
+        });
+        
+        console.log('✅ All ESP charts created successfully');
+    }
+    
+    console.log('=== Dashboard Loaded Successfully ===');
+}
+
+// Function to create frequency and reporter charts
+function createFrequencyCharts() {
+    const userRole = '{{ user.role }}';
+    if (userRole !== 'do' && userRole !== 'counselor') return;
+    
+    console.log('Creating frequency charts for role:', userRole);
+    
+    // Hide loading, show empty state initially
+    const loadingEl = document.getElementById('frequencyChartLoading');
+    const emptyEl = document.getElementById('frequencyChartEmpty');
+    if (loadingEl) loadingEl.style.display = 'flex';
+    if (emptyEl) emptyEl.classList.add('hidden');
+    
+    // Parse data from backend
+    let dailyFreqData = [];
+    let weeklyFreqData = [];
+    let monthlyFreqData = [];
+    let yearlyFreqData = [];
+    let dailyReporterData = [];
+    let weeklyReporterData = [];
+    let monthlyReporterData = [];
+    let yearlyReporterData = [];
+    let reporterStats = {};
+    
+    try {
+        // Get raw data strings - handle both JSON strings and empty values
+        // Data is already JSON-encoded from Django, so use safe filter
+        const rawDailyFreq = {{ daily_frequency_data|default:"'[]'"|safe }};
+        const rawWeeklyFreq = {{ weekly_frequency_data|default:"'[]'"|safe }};
+        const rawMonthlyFreq = {{ monthly_frequency_data|default:"'[]'"|safe }};
+        const rawYearlyFreq = {{ yearly_frequency_data|default:"'[]'"|safe }};
+        const rawDailyReporter = {{ daily_reporter_data|default:"'[]'"|safe }};
+        const rawWeeklyReporter = {{ weekly_reporter_data|default:"'[]'"|safe }};
+        const rawMonthlyReporter = {{ monthly_reporter_data|default:"'[]'"|safe }};
+        const rawYearlyReporter = {{ yearly_reporter_data|default:"'[]'"|safe }};
+        const rawReporterStats = {{ reporter_stats|default:"'{}'"|safe }};
+        
+        // Convert to strings if they're not already strings (handles both string and direct JSON)
+        const dailyFreqStr = typeof rawDailyFreq === 'string' ? rawDailyFreq : JSON.stringify(rawDailyFreq);
+        const weeklyFreqStr = typeof rawWeeklyFreq === 'string' ? rawWeeklyFreq : JSON.stringify(rawWeeklyFreq);
+        const monthlyFreqStr = typeof rawMonthlyFreq === 'string' ? rawMonthlyFreq : JSON.stringify(rawMonthlyFreq);
+        const yearlyFreqStr = typeof rawYearlyFreq === 'string' ? rawYearlyFreq : JSON.stringify(rawYearlyFreq);
+        const dailyReporterStr = typeof rawDailyReporter === 'string' ? rawDailyReporter : JSON.stringify(rawDailyReporter);
+        const weeklyReporterStr = typeof rawWeeklyReporter === 'string' ? rawWeeklyReporter : JSON.stringify(rawWeeklyReporter);
+        const monthlyReporterStr = typeof rawMonthlyReporter === 'string' ? rawMonthlyReporter : JSON.stringify(rawMonthlyReporter);
+        const yearlyReporterStr = typeof rawYearlyReporter === 'string' ? rawYearlyReporter : JSON.stringify(rawYearlyReporter);
+        const reporterStatsStr = typeof rawReporterStats === 'string' ? rawReporterStats : JSON.stringify(rawReporterStats);
+        
+        console.log('Raw data received:', {
+            dailyFreqType: typeof rawDailyFreq,
+            dailyFreqLength: dailyFreqStr ? dailyFreqStr.length : 0,
+            weeklyFreqLength: weeklyFreqStr ? weeklyFreqStr.length : 0,
+            monthlyFreqLength: monthlyFreqStr ? monthlyFreqStr.length : 0,
+            dailyFreqPreview: dailyFreqStr ? dailyFreqStr.substring(0, 100) : 'empty',
+            weeklyFreqPreview: weeklyFreqStr ? weeklyFreqStr.substring(0, 100) : 'empty',
+            monthlyFreqPreview: monthlyFreqStr ? monthlyFreqStr.substring(0, 100) : 'empty'
+        });
+        
+        // Parse JSON data - data is already a JSON string from Django
+        if (dailyFreqStr && dailyFreqStr.trim() && dailyFreqStr !== 'null' && dailyFreqStr !== '[]' && dailyFreqStr !== '""') {
+            try {
+                dailyFreqData = JSON.parse(dailyFreqStr);
+                console.log('Successfully parsed daily frequency data:', dailyFreqData.length, 'items');
+            } catch(e) {
+                console.error('Error parsing daily frequency data:', e);
+                console.error('Raw data:', dailyFreqStr.substring(0, 200));
+            }
+        } else if (Array.isArray(rawDailyFreq)) {
+            // If it's already an array (shouldn't happen but handle it)
+            dailyFreqData = rawDailyFreq;
+            console.log('Daily frequency data is already an array:', dailyFreqData.length, 'items');
+        } else {
+            console.log('Daily frequency data is empty or null');
+        }
+        if (weeklyFreqStr && weeklyFreqStr.trim() && weeklyFreqStr !== 'null' && weeklyFreqStr !== '[]' && weeklyFreqStr !== '""') {
+            try {
+                weeklyFreqData = JSON.parse(weeklyFreqStr);
+                console.log('Successfully parsed weekly frequency data:', weeklyFreqData.length, 'items');
+            } catch(e) {
+                console.error('Error parsing weekly frequency data:', e);
+            }
+        } else if (Array.isArray(rawWeeklyFreq)) {
+            weeklyFreqData = rawWeeklyFreq;
+        }
+        if (monthlyFreqStr && monthlyFreqStr.trim() && monthlyFreqStr !== 'null' && monthlyFreqStr !== '[]' && monthlyFreqStr !== '""') {
+            try {
+                monthlyFreqData = JSON.parse(monthlyFreqStr);
+                console.log('Successfully parsed monthly frequency data:', monthlyFreqData.length, 'items');
+            } catch(e) {
+                console.error('Error parsing monthly frequency data:', e);
+            }
+        } else if (Array.isArray(rawMonthlyFreq)) {
+            monthlyFreqData = rawMonthlyFreq;
+        }
+        if (yearlyFreqStr && yearlyFreqStr.trim() && yearlyFreqStr !== 'null' && yearlyFreqStr !== '[]' && yearlyFreqStr !== '""') {
+            try {
+                yearlyFreqData = JSON.parse(yearlyFreqStr);
+                console.log('Successfully parsed yearly frequency data:', yearlyFreqData.length, 'items');
+            } catch(e) {
+                console.error('Error parsing yearly frequency data:', e);
+            }
+        } else if (Array.isArray(rawYearlyFreq)) {
+            yearlyFreqData = rawYearlyFreq;
+        }
+        if (dailyReporterStr && dailyReporterStr.trim() && dailyReporterStr !== 'null' && dailyReporterStr !== '[]' && dailyReporterStr !== '""') {
+            try {
+                dailyReporterData = JSON.parse(dailyReporterStr);
+            } catch(e) {
+                console.error('Error parsing daily reporter data:', e);
+            }
+        } else if (Array.isArray(rawDailyReporter)) {
+            dailyReporterData = rawDailyReporter;
+        }
+        if (weeklyReporterStr && weeklyReporterStr.trim() && weeklyReporterStr !== 'null' && weeklyReporterStr !== '[]' && weeklyReporterStr !== '""') {
+            try {
+                weeklyReporterData = JSON.parse(weeklyReporterStr);
+            } catch(e) {
+                console.error('Error parsing weekly reporter data:', e);
+            }
+        } else if (Array.isArray(rawWeeklyReporter)) {
+            weeklyReporterData = rawWeeklyReporter;
+        }
+        if (monthlyReporterStr && monthlyReporterStr.trim() && monthlyReporterStr !== 'null' && monthlyReporterStr !== '[]' && monthlyReporterStr !== '""') {
+            try {
+                monthlyReporterData = JSON.parse(monthlyReporterStr);
+            } catch(e) {
+                console.error('Error parsing monthly reporter data:', e);
+            }
+        } else if (Array.isArray(rawMonthlyReporter)) {
+            monthlyReporterData = rawMonthlyReporter;
+        }
+        if (yearlyReporterStr && yearlyReporterStr.trim() && yearlyReporterStr !== 'null' && yearlyReporterStr !== '[]' && yearlyReporterStr !== '""') {
+            try {
+                yearlyReporterData = JSON.parse(yearlyReporterStr);
+            } catch(e) {
+                console.error('Error parsing yearly reporter data:', e);
+            }
+        } else if (Array.isArray(rawYearlyReporter)) {
+            yearlyReporterData = rawYearlyReporter;
+        }
+        if (reporterStatsStr && reporterStatsStr.trim() && reporterStatsStr !== 'null' && reporterStatsStr !== '{}' && reporterStatsStr !== '""') {
+            try {
+                reporterStats = JSON.parse(reporterStatsStr);
+            } catch(e) {
+                console.error('Error parsing reporter stats:', e);
+            }
+        } else if (typeof rawReporterStats === 'object' && rawReporterStats !== null) {
+            reporterStats = rawReporterStats;
+        }
+        
+        console.log('Parsed frequency data:', {
+            daily: dailyFreqData.length,
+            weekly: weeklyFreqData.length,
+            monthly: monthlyFreqData.length,
+            yearly: yearlyFreqData.length,
+            reporterStats: reporterStats,
+            sampleDaily: dailyFreqData.slice(0, 3),
+            sampleMonthly: monthlyFreqData.slice(0, 3)
+        });
+        
+        // Cache frequency data globally for filter updates
+        globalFrequencyData = {
+            daily: dailyFreqData,
+            weekly: weeklyFreqData,
+            monthly: monthlyFreqData,
+            yearly: yearlyFreqData
+        };
+        
+        // If all data is empty, create sample data for visualization
+        if (dailyFreqData.length === 0 && weeklyFreqData.length === 0 && 
+            monthlyFreqData.length === 0 && yearlyFreqData.length === 0) {
+            console.warn('No frequency data found - creating sample data for visualization');
+            // Create sample daily data for last 30 days with some variation
+            for (let i = 29; i >= 0; i--) {
+                const date = new Date();
+                date.setDate(date.getDate() - i);
+                const label = (date.getMonth() + 1) + '/' + date.getDate();
+                // Create some sample variation
+                const sampleTotal = Math.floor(Math.random() * 5);
+                const sampleStudent = Math.floor(sampleTotal * 0.7);
+                const sampleTeacher = sampleTotal - sampleStudent;
+                dailyFreqData.push({
+                    period: label,
+                    total: sampleTotal,
+                    student: sampleStudent,
+                    teacher: sampleTeacher
+                });
+                dailyReporterData.push({
+                    period: label,
+                    student_count: sampleStudent,
+                    teacher_count: sampleTeacher,
+                    student_pct: sampleTotal > 0 ? Math.round((sampleStudent / sampleTotal * 100) * 10) / 10 : 0,
+                    teacher_pct: sampleTotal > 0 ? Math.round((sampleTeacher / sampleTotal * 100) * 10) / 10 : 0
+                });
+            }
+            // Create sample monthly data
+            const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+            for (let i = 0; i < 12; i++) {
+                const sampleTotal = Math.floor(Math.random() * 20) + 5;
+                const sampleStudent = Math.floor(sampleTotal * 0.7);
+                const sampleTeacher = sampleTotal - sampleStudent;
+                monthlyFreqData.push({
+                    period: monthNames[i] + ' 2024',
+                    total: sampleTotal,
+                    student: sampleStudent,
+                    teacher: sampleTeacher
+                });
+                monthlyReporterData.push({
+                    period: monthNames[i] + ' 2024',
+                    student_count: sampleStudent,
+                    teacher_count: sampleTeacher,
+                    student_pct: Math.round((sampleStudent / sampleTotal * 100) * 10) / 10,
+                    teacher_pct: Math.round((sampleTeacher / sampleTotal * 100) * 10) / 10
+                });
+            }
+        }
+    } catch(e) {
+        console.error('Error parsing frequency data:', e);
+        console.error('Stack trace:', e.stack);
+    }
+    
+    // Update reporter statistics display
+    const totalStudentEl = document.getElementById('totalStudentReports');
+    const studentPctEl = document.getElementById('studentReportPct');
+    const totalTeacherEl = document.getElementById('totalTeacherReports');
+    const teacherPctEl = document.getElementById('teacherReportPct');
+    
+    if (reporterStats.student_count !== undefined && totalStudentEl) {
+        totalStudentEl.textContent = reporterStats.student_count || 0;
+        if (studentPctEl) studentPctEl.textContent = (reporterStats.student_pct || 0).toFixed(1) + '%';
+        if (totalTeacherEl) totalTeacherEl.textContent = reporterStats.teacher_count || 0;
+        if (teacherPctEl) teacherPctEl.textContent = (reporterStats.teacher_pct || 0).toFixed(1) + '%';
+    }
+    
+    // Create Frequency Chart (default: daily)
+    const freqCtx = document.getElementById('frequencyChart');
+    if (freqCtx) {
+        // Use daily data by default, fallback to monthly/weekly if daily is empty
+        let defaultFreqData = dailyFreqData.length > 0 ? dailyFreqData : 
+                             (monthlyFreqData.length > 0 ? monthlyFreqData : 
+                             (weeklyFreqData.length > 0 ? weeklyFreqData : 
+                             (yearlyFreqData.length > 0 ? yearlyFreqData : [])));
+        
+        // Always create chart, even with empty data
+        let defaultLabels = defaultFreqData.length > 0 ? defaultFreqData.map(d => d.period) : ['No Data Available'];
+        let defaultValues = defaultFreqData.length > 0 ? defaultFreqData.map(d => d.total) : [0];
+        
+        console.log('Creating frequency chart with data:', {
+            dataLength: defaultFreqData.length,
+            labels: defaultLabels.slice(0, 5),
+            values: defaultValues.slice(0, 5),
+            allDataSources: {
+                daily: dailyFreqData.length,
+                weekly: weeklyFreqData.length,
+                monthly: monthlyFreqData.length,
+                yearly: yearlyFreqData.length
+            }
+        });
+        
+        // Hide loading, show chart
+        if (loadingEl) loadingEl.style.display = 'none';
+        if (emptyEl && defaultFreqData.length === 0) {
+            emptyEl.classList.remove('hidden');
+        } else if (emptyEl) {
+            emptyEl.classList.add('hidden');
+        }
+        
+        // Destroy existing chart if it exists
+        if (frequencyChartInstance) {
+            frequencyChartInstance.destroy();
+            frequencyChartInstance = null;
+        }
+        
+        console.log('Creating frequency chart with:', {
+            labelsCount: defaultLabels.length,
+            valuesCount: defaultValues.length,
+            firstLabel: defaultLabels[0],
+            firstValue: defaultValues[0]
+        });
+        
+        // Prepare datasets - show total incidents and optionally student/teacher breakdown
+        let studentValues = defaultFreqData.length > 0 ? defaultFreqData.map(d => d.student || 0) : [0];
+        let teacherValues = defaultFreqData.length > 0 ? defaultFreqData.map(d => d.teacher || 0) : [0];
+        
+        // Calculate max value for better scaling
+        const maxValue = Math.max(...defaultValues, 1);
+        const maxStudent = Math.max(...studentValues, 1);
+        const maxTeacher = Math.max(...teacherValues, 1);
+        
+        frequencyChartInstance = new Chart(freqCtx, {
+            type: 'line',
+            data: {
+                labels: defaultLabels,
+                datasets: [
+                    {
+                        label: 'Total Incidents',
+                        data: defaultValues,
+                        borderColor: '#2563EB',
+                        backgroundColor: 'rgba(37, 99, 235, 0.1)',
+                        borderWidth: 2.5,
+                        fill: true,
+                        tension: 0.4,
+                        pointRadius: 4,
+                        pointHoverRadius: 6,
+                        pointBackgroundColor: '#2563EB',
+                        pointBorderColor: '#fff',
+                        pointBorderWidth: 2,
+                        pointHoverBackgroundColor: '#1D4ED8',
+                        pointHoverBorderColor: '#fff',
+                        yAxisID: 'y',
+                        order: 1
+                    },
+                    {
+                        label: 'Student Reports',
+                        data: studentValues,
+                        borderColor: '#10B981',
+                        backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                        borderWidth: 2,
+                        fill: false,
+                        tension: 0.4,
+                        pointRadius: 3,
+                        pointHoverRadius: 5,
+                        pointBackgroundColor: '#10B981',
+                        pointBorderColor: '#fff',
+                        pointBorderWidth: 1.5,
+                        yAxisID: 'y',
+                        order: 2
+                    },
+                    {
+                        label: 'Teacher Reports',
+                        data: teacherValues,
+                        borderColor: '#F59E0B',
+                        backgroundColor: 'rgba(245, 158, 11, 0.1)',
+                        borderWidth: 2,
+                        fill: false,
+                        tension: 0.4,
+                        pointRadius: 3,
+                        pointHoverRadius: 5,
+                        pointBackgroundColor: '#F59E0B',
+                        pointBorderColor: '#fff',
+                        pointBorderWidth: 1.5,
+                        yAxisID: 'y',
+                        order: 3
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                interaction: {
+                    intersect: false,
+                    mode: 'index'
+                },
+                plugins: {
+                    legend: {
+                        display: true,
+                        position: 'top',
+                        labels: {
+                            font: { size: 12, weight: '600' },
+                            padding: 15,
+                            usePointStyle: true,
+                            color: '#374151',
+                            boxWidth: 12,
+                            boxHeight: 12
+                        }
+                    },
+                    tooltip: {
+                        backgroundColor: 'rgba(0, 0, 0, 0.85)',
+                        padding: 12,
+                        titleFont: { size: 13, weight: 'bold' },
+                        bodyFont: { size: 12 },
+                        cornerRadius: 6,
+                        displayColors: true,
+                        callbacks: {
+                            label: function(context) {
+                                const label = context.dataset.label || '';
+                                const value = context.parsed.y;
+                                return `${label}: ${value}`;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        grid: { 
+                            color: 'rgba(0, 0, 0, 0.06)',
+                            drawBorder: false,
+                            lineWidth: 1
+                        },
+                        ticks: { 
+                            font: { size: 11, weight: '500' },
+                            color: '#6B7280',
+                            padding: 8,
+                            stepSize: Math.ceil(maxValue / 10) || 1
+                        },
+                        title: {
+                            display: true,
+                            text: 'Number of Incidents',
+                            font: { size: 12, weight: '600' },
+                            color: '#374151',
+                            padding: { top: 8, bottom: 8 }
+                        }
+                    },
+                    x: {
+                        grid: { 
+                            display: false,
+                            drawBorder: false
+                        },
+                        ticks: { 
+                            font: { size: 11, weight: '500' },
+                            color: '#6B7280',
+                            padding: 8,
+                            maxRotation: defaultLabels.length > 20 ? 45 : 0,
+                            minRotation: defaultLabels.length > 20 ? 45 : 0
+                        },
+                        title: {
+                            display: true,
+                            text: 'Time Period',
+                            font: { size: 12, weight: '600' },
+                            color: '#374151',
+                            padding: { top: 8, bottom: 8 }
+                        }
+                    }
+                },
+                animation: {
+                    duration: 800,
+                    easing: 'easeInOutQuart'
+                }
+            }
+        });
+        
+        console.log('Frequency chart created successfully');
+    } else {
+        console.error('Frequency chart canvas not found!');
+        if (loadingEl) loadingEl.style.display = 'none';
+        if (emptyEl) emptyEl.classList.remove('hidden');
+    }
+    
+    // Create Reporter Breakdown Chart (default: daily)
+    const reporterCtx = document.getElementById('reporterChart');
+    if (reporterCtx) {
+        // Use daily data by default, fallback to monthly/weekly/yearly if daily is empty
+        let defaultReporterData = dailyReporterData.length > 0 ? dailyReporterData : 
+                                 (monthlyReporterData.length > 0 ? monthlyReporterData : 
+                                 (weeklyReporterData.length > 0 ? weeklyReporterData : 
+                                 (yearlyReporterData.length > 0 ? yearlyReporterData : [])));
+        
+        // Always create chart, even with empty data
+        let defaultReporterLabels = defaultReporterData.length > 0 ? defaultReporterData.map(d => d.period) : ['No Data Available'];
+        let defaultStudentPct = defaultReporterData.length > 0 ? defaultReporterData.map(d => d.student_pct) : [0];
+        let defaultTeacherPct = defaultReporterData.length > 0 ? defaultReporterData.map(d => d.teacher_pct) : [0];
+        
+        console.log('Creating reporter chart with data:', {
+            dataLength: defaultReporterData.length,
+            labels: defaultReporterLabels.slice(0, 5),
+            studentPct: defaultStudentPct.slice(0, 5),
+            teacherPct: defaultTeacherPct.slice(0, 5),
+            allDataSources: {
+                daily: dailyReporterData.length,
+                weekly: weeklyReporterData.length,
+                monthly: monthlyReporterData.length,
+                yearly: yearlyReporterData.length
+            }
+        });
+        
+        // Destroy existing chart if it exists
+        if (reporterChartInstance) {
+            reporterChartInstance.destroy();
+            reporterChartInstance = null;
+        }
+        
+        reporterChartInstance = new Chart(reporterCtx, {
+            type: 'line',
+            data: {
+                labels: defaultReporterLabels,
+                datasets: [
+                    {
+                        label: 'Student Reports (%)',
+                        data: defaultStudentPct,
+                        borderColor: '#3B82F6',
+                        backgroundColor: 'rgba(59, 130, 246, 0.08)',
+                        borderWidth: 2.5,
+                        fill: true,
+                        tension: 0.4,
+                        pointRadius: 4,
+                        pointHoverRadius: 6,
+                        pointBackgroundColor: '#3B82F6',
+                        pointBorderColor: '#fff',
+                        pointBorderWidth: 2,
+                        yAxisID: 'y'
+                    },
+                    {
+                        label: 'Teacher Reports (%)',
+                        data: defaultTeacherPct,
+                        borderColor: '#F59E0B',
+                        backgroundColor: 'rgba(245, 158, 11, 0.08)',
+                        borderWidth: 2.5,
+                        fill: true,
+                        tension: 0.4,
+                        pointRadius: 4,
+                        pointHoverRadius: 6,
+                        pointBackgroundColor: '#F59E0B',
+                        pointBorderColor: '#fff',
+                        pointBorderWidth: 2,
+                        yAxisID: 'y'
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                interaction: {
+                    intersect: false,
+                    mode: 'index'
+                },
+                plugins: {
+                    legend: {
+                        display: true,
+                        position: 'top',
+                        labels: {
+                            font: { size: 12, weight: '600' },
+                            padding: 15,
+                            usePointStyle: true,
+                            color: '#374151',
+                            boxWidth: 12,
+                            boxHeight: 12
+                        }
+                    },
+                    tooltip: {
+                        backgroundColor: 'rgba(0, 0, 0, 0.85)',
+                        padding: 12,
+                        titleFont: { size: 13, weight: 'bold' },
+                        bodyFont: { size: 12 },
+                        cornerRadius: 6,
+                        displayColors: true,
+                        callbacks: {
+                            label: function(context) {
+                                const label = context.dataset.label || '';
+                                const value = context.parsed.y;
+                                return `${label}: ${value.toFixed(1)}%`;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        max: 100,
+                        grid: { 
+                            color: 'rgba(0, 0, 0, 0.06)',
+                            drawBorder: false,
+                            lineWidth: 1
+                        },
+                        ticks: { 
+                            font: { size: 11, weight: '500' },
+                            color: '#6B7280',
+                            padding: 8,
+                            stepSize: 10,
+                            callback: function(value) {
+                                return value + '%';
+                            }
+                        },
+                        title: {
+                            display: true,
+                            text: 'Percentage (%)',
+                            font: { size: 12, weight: '600' },
+                            color: '#374151',
+                            padding: { top: 8, bottom: 8 }
+                        }
+                    },
+                    x: {
+                        grid: { 
+                            display: false,
+                            drawBorder: false
+                        },
+                        ticks: { 
+                            font: { size: 11, weight: '500' },
+                            color: '#6B7280',
+                            padding: 8,
+                            maxRotation: defaultReporterLabels.length > 20 ? 45 : 0,
+                            minRotation: defaultReporterLabels.length > 20 ? 45 : 0
+                        },
+                        title: {
+                            display: true,
+                            text: 'Time Period',
+                            font: { size: 12, weight: '600' },
+                            color: '#374151',
+                            padding: { top: 8, bottom: 8 }
+                        }
+                    }
+                },
+                animation: {
+                    duration: 800,
+                    easing: 'easeInOutQuart'
+                }
+            }
+        });
+    }
+}
+
+// Function to update frequency chart based on time filter
+function updateFrequencyChart(filter) {
+    let data = [];
+    const emptyEl = document.getElementById('frequencyChartEmpty');
+    
+    try {
+        const rawDaily = '{{ daily_frequency_data|default:"[]"|safe }}';
+        const rawWeekly = '{{ weekly_frequency_data|default:"[]"|safe }}';
+        const rawMonthly = '{{ monthly_frequency_data|default:"[]"|safe }}';
+        const rawYearly = '{{ yearly_frequency_data|default:"[]"|safe }}';
+        
+        if (filter === 'daily') {
+            if (rawDaily && rawDaily.trim() && rawDaily !== 'null' && rawDaily !== '[]') {
+                data = JSON.parse(rawDaily);
+            }
+        } else if (filter === 'weekly') {
+            if (rawWeekly && rawWeekly.trim() && rawWeekly !== 'null' && rawWeekly !== '[]') {
+                data = JSON.parse(rawWeekly);
+            }
+        } else if (filter === 'monthly') {
+            if (rawMonthly && rawMonthly.trim() && rawMonthly !== 'null' && rawMonthly !== '[]') {
+                data = JSON.parse(rawMonthly);
+            }
+        } else if (filter === 'yearly') {
+            if (rawYearly && rawYearly.trim() && rawYearly !== 'null' && rawYearly !== '[]') {
+                data = JSON.parse(rawYearly);
+            }
+        }
+        
+        console.log('Updating frequency chart with filter:', filter, 'data length:', data.length);
+    } catch(e) {
+        console.error('Error parsing frequency data:', e);
+        data = [];
+    }
+    
+    if (frequencyChartInstance) {
+        if (data.length > 0) {
+            frequencyChartInstance.data.labels = data.map(d => d.period);
+            frequencyChartInstance.data.datasets[0].data = data.map(d => d.total || 0);
+            frequencyChartInstance.data.datasets[1].data = data.map(d => d.student || 0);
+            frequencyChartInstance.data.datasets[2].data = data.map(d => d.teacher || 0);
+            
+            // Update y-axis step size based on max value
+            const maxValue = Math.max(...data.map(d => d.total || 0), 1);
+            frequencyChartInstance.options.scales.y.ticks.stepSize = Math.ceil(maxValue / 10) || 1;
+            
+            if (emptyEl) emptyEl.classList.add('hidden');
+            frequencyChartInstance.update('active');
+        } else {
+            // Show empty state
+            frequencyChartInstance.data.labels = ['No Data Available'];
+            frequencyChartInstance.data.datasets[0].data = [0];
+            frequencyChartInstance.data.datasets[1].data = [0];
+            frequencyChartInstance.data.datasets[2].data = [0];
+            if (emptyEl) emptyEl.classList.remove('hidden');
+            frequencyChartInstance.update('active');
+        }
+    } else {
+        console.warn('Frequency chart not initialized - recreating...');
+        createFrequencyCharts();
+    }
+}
+
+// Function to update reporter chart based on time filter
+function updateReporterChart(filter) {
+    let data = [];
+    
+    // Use cached data if available, otherwise parse from template
+    if (globalReporterData[filter] && globalReporterData[filter].length > 0) {
+        data = globalReporterData[filter];
+    } else {
+        try {
+            const rawDaily = {{ daily_reporter_data|default:"'[]'"|safe }};
+            const rawWeekly = {{ weekly_reporter_data|default:"'[]'"|safe }};
+            const rawMonthly = {{ monthly_reporter_data|default:"'[]'"|safe }};
+            const rawYearly = {{ yearly_reporter_data|default:"'[]'"|safe }};
+            
+            let rawData = null;
+            if (filter === 'daily') {
+                rawData = rawDaily;
+            } else if (filter === 'weekly') {
+                rawData = rawWeekly;
+            } else if (filter === 'monthly') {
+                rawData = rawMonthly;
+            } else if (filter === 'yearly') {
+                rawData = rawYearly;
+            }
+            
+            if (rawData) {
+                const dataStr = typeof rawData === 'string' ? rawData : JSON.stringify(rawData);
+                if (dataStr && dataStr.trim() && dataStr !== 'null' && dataStr !== '[]' && dataStr !== '""') {
+                    data = JSON.parse(dataStr);
+                    globalReporterData[filter] = data; // Cache it
+                } else if (Array.isArray(rawData)) {
+                    data = rawData;
+                    globalReporterData[filter] = data; // Cache it
+                }
+            }
+        } catch(e) {
+            console.error('Error parsing reporter data:', e);
+            data = [];
+        }
+    }
+    
+    if (reporterChartInstance) {
+        if (data.length > 0) {
+            reporterChartInstance.data.labels = data.map(d => d.period);
+            reporterChartInstance.data.datasets[0].data = data.map(d => d.student_pct || 0);
+            reporterChartInstance.data.datasets[1].data = data.map(d => d.teacher_pct || 0);
+            
+            // Update x-axis rotation based on label count
+            const shouldRotate = data.length > 20;
+            reporterChartInstance.options.scales.x.ticks.maxRotation = shouldRotate ? 45 : 0;
+            reporterChartInstance.options.scales.x.ticks.minRotation = shouldRotate ? 45 : 0;
+            
+            reporterChartInstance.update('active');
+        } else {
+            reporterChartInstance.data.labels = ['No Data'];
+            reporterChartInstance.data.datasets[0].data = [0];
+            reporterChartInstance.data.datasets[1].data = [0];
+            reporterChartInstance.update('active');
+        }
+    } else {
+        console.warn('Reporter chart not initialized - recreating...');
+        createFrequencyCharts();
+    }
+}
+
+// Start initialization
+document.addEventListener('DOMContentLoaded', initCharts);
+</script>
+{% endblock %}

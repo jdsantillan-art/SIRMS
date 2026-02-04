@@ -1,0 +1,513 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Account Settings - SIRMS{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Premium Account Settings - Optimized for Base Template */
+    .premium-account-page {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        padding: 0;
+        margin: 0;
+        position: relative;
+        overflow-x: hidden;
+    }
+    
+    /* Animated Background */
+    .premium-account-page::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: 
+            radial-gradient(circle at 20% 80%, rgba(120, 119, 198, 0.3) 0%, transparent 50%),
+            radial-gradient(circle at 80% 20%, rgba(255, 119, 198, 0.3) 0%, transparent 50%),
+            radial-gradient(circle at 40% 40%, rgba(120, 219, 255, 0.3) 0%, transparent 50%);
+        animation: backgroundShift 20s ease-in-out infinite;
+    }
+    
+    @keyframes backgroundShift {
+        0%, 100% { transform: translateX(0) translateY(0); }
+        25% { transform: translateX(-20px) translateY(-20px); }
+        50% { transform: translateX(20px) translateY(-10px); }
+        75% { transform: translateX(-10px) translateY(20px); }
+    }
+    
+    .settings-wrapper {
+        position: relative;
+        z-index: 1;
+        padding: 40px 20px;
+        max-width: 1200px;
+        margin: 0 auto;
+    }
+    
+    /* Premium Header */
+    .premium-header {
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(20px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 24px;
+        padding: 40px;
+        margin-bottom: 30px;
+        box-shadow: 
+            0 8px 32px rgba(0, 0, 0, 0.1),
+            inset 0 1px 0 rgba(255, 255, 255, 0.2);
+        animation: fadeInUp 0.8s ease-out;
+    }
+    
+    .profile-section {
+        display: flex;
+        align-items: center;
+        gap: 30px;
+    }
+    
+    .premium-avatar {
+        width: 120px;
+        height: 120px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 48px;
+        font-weight: 800;
+        color: white;
+        box-shadow: 
+            0 20px 40px rgba(0, 0, 0, 0.2),
+            0 0 0 4px rgba(255, 255, 255, 0.1);
+        transition: all 0.4s ease;
+    }
+    
+    .premium-avatar:hover {
+        transform: scale(1.05);
+        box-shadow: 
+            0 25px 50px rgba(0, 0, 0, 0.3),
+            0 0 0 4px rgba(255, 255, 255, 0.2);
+    }
+    
+    .profile-info h1 {
+        margin: 0;
+        font-size: 42px;
+        font-weight: 800;
+        color: white;
+        text-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+        background: linear-gradient(135deg, #ffffff 0%, #f0f0f0 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+    
+    .profile-info p {
+        margin: 12px 0 0 0;
+        font-size: 18px;
+        color: rgba(255, 255, 255, 0.8);
+        font-weight: 500;
+    }
+    
+    /* Content Grid */
+    .premium-grid {
+        display: grid;
+        grid-template-columns: 2fr 1fr;
+        gap: 30px;
+    }
+    
+    /* Premium Cards */
+    .premium-card {
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(20px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 24px;
+        overflow: hidden;
+        margin-bottom: 25px;
+        transition: all 0.4s ease;
+        box-shadow: 
+            0 8px 32px rgba(0, 0, 0, 0.1),
+            inset 0 1px 0 rgba(255, 255, 255, 0.2);
+        animation: fadeInUp 0.8s ease-out;
+    }
+    
+    .premium-card:hover {
+        transform: translateY(-8px);
+        box-shadow: 
+            0 20px 60px rgba(0, 0, 0, 0.2),
+            inset 0 1px 0 rgba(255, 255, 255, 0.3);
+    }
+    
+    .card-header {
+        background: rgba(255, 255, 255, 0.05);
+        padding: 25px 30px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        display: flex;
+        align-items: center;
+        gap: 15px;
+    }
+    
+    .card-header i {
+        color: white;
+        font-size: 24px;
+        padding: 12px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 12px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    }
+    
+    .card-header h3 {
+        margin: 0;
+        font-size: 22px;
+        font-weight: 800;
+        color: white;
+    }
+    
+    .card-body {
+        padding: 30px;
+    }
+    
+    /* Form Styles */
+    .form-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 25px;
+        margin-bottom: 25px;
+    }
+    
+    .form-group {
+        margin-bottom: 25px;
+    }
+    
+    .form-label {
+        display: block;
+        font-size: 14px;
+        font-weight: 700;
+        color: white;
+        margin-bottom: 12px;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        opacity: 0.9;
+    }
+    
+    .premium-input {
+        width: 100%;
+        border: 2px solid rgba(255, 255, 255, 0.2);
+        border-radius: 16px;
+        padding: 18px 24px;
+        font-size: 16px;
+        font-weight: 500;
+        color: white;
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+        transition: all 0.3s ease;
+        box-sizing: border-box;
+    }
+    
+    .premium-input::placeholder {
+        color: rgba(255, 255, 255, 0.5);
+    }
+    
+    .premium-input:focus {
+        outline: none;
+        border-color: rgba(255, 255, 255, 0.5);
+        background: rgba(255, 255, 255, 0.15);
+        box-shadow: 
+            0 0 0 4px rgba(255, 255, 255, 0.1),
+            0 8px 32px rgba(0, 0, 0, 0.2);
+        transform: translateY(-2px);
+    }
+    
+    /* Premium Buttons */
+    .btn-premium {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border: none;
+        border-radius: 16px;
+        padding: 20px 32px;
+        font-size: 16px;
+        font-weight: 700;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        width: 100%;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        box-shadow: 
+            0 8px 24px rgba(102, 126, 234, 0.3),
+            inset 0 1px 0 rgba(255, 255, 255, 0.2);
+    }
+    
+    .btn-premium:hover {
+        transform: translateY(-3px);
+        box-shadow: 
+            0 12px 36px rgba(102, 126, 234, 0.4),
+            inset 0 1px 0 rgba(255, 255, 255, 0.3);
+    }
+    
+    .btn-secondary {
+        background: rgba(255, 255, 255, 0.1);
+        color: white;
+        border: 2px solid rgba(255, 255, 255, 0.3);
+        border-radius: 16px;
+        padding: 18px 32px;
+        font-size: 16px;
+        font-weight: 700;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        width: 100%;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        backdrop-filter: blur(10px);
+    }
+    
+    .btn-secondary:hover {
+        background: rgba(255, 255, 255, 0.2);
+        border-color: rgba(255, 255, 255, 0.5);
+        transform: translateY(-3px);
+    }
+    
+    /* Info Items */
+    .info-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 20px 0;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    .info-item:last-child {
+        border-bottom: none;
+    }
+    
+    .info-label {
+        font-weight: 700;
+        color: rgba(255, 255, 255, 0.8);
+        font-size: 14px;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+    
+    .info-value {
+        font-weight: 600;
+        color: white;
+        font-size: 15px;
+    }
+    
+    /* Badges */
+    .badge {
+        padding: 8px 16px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .badge-premium {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+    }
+    
+    .badge-success {
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        color: white;
+    }
+    
+    .badge-warning {
+        background: linear-gradient(135deg, #ffc107 0%, #ff8f00 100%);
+        color: white;
+    }
+    
+    /* Close Button */
+    .close-button {
+        position: absolute;
+        top: 20px;
+        right: 20px;
+        background: rgba(255, 255, 255, 0.2);
+        border: none;
+        color: white;
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        font-size: 20px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        backdrop-filter: blur(10px);
+        z-index: 10;
+    }
+    
+    .close-button:hover {
+        background: rgba(255, 255, 255, 0.3);
+        transform: scale(1.1);
+    }
+    
+    /* Animations */
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(40px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    /* Responsive */
+    @media (max-width: 768px) {
+        .premium-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .form-row {
+            grid-template-columns: 1fr;
+        }
+        
+        .profile-section {
+            flex-direction: column;
+            text-align: center;
+        }
+        
+        .premium-avatar {
+            width: 100px;
+            height: 100px;
+            font-size: 36px;
+        }
+        
+        .profile-info h1 {
+            font-size: 28px;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="premium-account-page">
+    <!-- Close Button -->
+    <button class="close-button" onclick="window.history.back()" title="Close Account Settings">
+        <i class="fas fa-times"></i>
+    </button>
+    
+    <div class="settings-wrapper">
+        <!-- Premium Header -->
+        <div class="premium-header">
+            <div class="profile-section">
+                <div class="premium-avatar">
+                    {{ user.first_name.0|default:"U" }}{{ user.last_name.0|default:"" }}
+                </div>
+                <div class="profile-info">
+                    <h1>{% if user.get_full_name_with_middle %}{{ user.get_full_name_with_middle }}{% else %}{{ user.get_full_name|default:"Account Settings" }}{% endif %}</h1>
+                    <p>Manage your account information and security preferences</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="premium-grid">
+            <!-- Main Content -->
+            <div>
+                <!-- Security Settings -->
+                <div class="premium-card">
+                    <div class="card-header">
+                        <i class="fas fa-shield-alt"></i>
+                        <h3>Security Settings</h3>
+                    </div>
+                    <div class="card-body">
+                        <form method="post">
+                            {% csrf_token %}
+                            <input type="hidden" name="form_type" value="password">
+                            
+                            <div class="form-group">
+                                <label class="form-label">Current Password</label>
+                                <input type="password" name="old_password" required class="premium-input" placeholder="Enter your current password">
+                            </div>
+                            
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label">New Password</label>
+                                    <input type="password" name="new_password1" required minlength="8" class="premium-input" placeholder="Create a strong password">
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label class="form-label">Confirm Password</label>
+                                    <input type="password" name="new_password2" required minlength="8" class="premium-input" placeholder="Confirm your new password">
+                                </div>
+                            </div>
+                            
+                            <button type="submit" class="btn-premium">
+                                <i class="fas fa-shield-alt" style="margin-right: 8px;"></i>Update Password
+                            </button>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Personal Information -->
+                <div class="premium-card">
+                    <div class="card-header">
+                        <i class="fas fa-user"></i>
+                        <h3>Personal Information</h3>
+                    </div>
+                    <div class="card-body">
+                        <form method="post">
+                            {% csrf_token %}
+                            <input type="hidden" name="form_type" value="profile">
+                            
+                            <div class="form-group">
+                                <label class="form-label">Username</label>
+                                <input type="text" name="username" value="{{ user.username }}" class="premium-input" placeholder="Enter username">
+                            </div>
+                            
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label">First Name</label>
+                                    <input type="text" name="first_name" value="{{ user.first_name }}" class="premium-input" placeholder="Enter first name">
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label class="form-label">Last Name</label>
+                                    <input type="text" name="last_name" value="{{ user.last_name }}" class="premium-input" placeholder="Enter last name">
+                                </div>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label class="form-label">Email Address</label>
+                                <input type="email" name="email" value="{{ user.email }}" class="premium-input" placeholder="Enter email address">
+                            </div>
+                            
+                            <button type="submit" class="btn-secondary">
+                                <i class="fas fa-save" style="margin-right: 8px;"></i>Save Changes
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sidebar -->
+            <div>
+                <!-- Account Summary -->
+                <div class="premium-card">
+                    <div class="card-header">
+                        <i class="fas fa-id-card"></i>
+                        <h3>Account Summary</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="info-item">
+                            <span class="info-label">Username</span>
+                            <span class="info-value">{{ user.username }}</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Role</span>
+                            <span class="badge badge-premium">{{ user.get_role_display }}</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Status</span>
+                            <span class="badge {% if user.is_active %}badge-success{% else %}badge-warning{% endif %}">
+                                {% if user.is_active %}Active{% else %}Inactive{% endif %}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

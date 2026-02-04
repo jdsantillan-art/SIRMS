@@ -1,0 +1,738 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Account Settings - SIRMS{% endblock %}
+
+{% block page_title %}Account Settings{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Clean Green & White Account Settings Design */
+    .account-settings-wrapper {
+        background: #ffffff;
+        min-height: calc(100vh - 120px);
+        padding: 30px;
+        position: relative;
+    }
+    
+    .settings-container {
+        max-width: 1000px;
+        margin: 0 auto;
+        display: grid;
+        grid-template-columns: 1fr 350px;
+        gap: 30px;
+    }
+    
+    /* Left Panel - Security Settings */
+    .security-panel {
+        background: #ffffff;
+        border: 2px solid #e5e7eb;
+        border-radius: 12px;
+        padding: 0;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+    }
+    
+    .panel-header {
+        background: #10b981;
+        color: white;
+        padding: 20px 25px;
+        border-radius: 10p %}endblock
+{% ript>
+</sc  }
+} });
+  
+       }      n;
+      uret    r         tch.');
+   masswords e met and paements arrequir password ease ensure   alert('Pl          
+   ();Defaultvent       e.pre    {
+     !isMatch) rong || f (!isSt           i      
+ ();
+      tchPasswordMa checkatch =sM    const i
+        ord);gth(passwordStrenswheckPas c =ngst isStro        conlue;
+    nput.vaPasswordIsword = new   const pas         {
+e) ion(unctt', fer('submidEventListenadrdForm.wo   pass  m) {
+   wordFor  if (passrm');
+  'passwordFoentById(lem.getEocumentm = dpasswordForst     con
+    
+  }  
+ch);kPasswordMat chec',nputner('isteaddEventLiwordInput.irmPassnf
+        coInput) {swordnfirmPas   if (co
+    
+ );
+    }   }      }
+         );
+  atch(ordMPasswheck        c
+        value) {dInput.mPasswor(confir         if 
+   this.value);trength(swordS    checkPas     n() {
+   tiouncnput', fer('itListenddEvenut.ardInp  newPasswo {
+      put)dIn(newPassworf    
+    i);
+ ord'nfirmPassw('cotByIdtElement.geumen docInput =rmPasswordnst confi');
+    cosswordtById('newPaetElemen.gumentInput = docrdasswot newPons   
+    c
+    }
+ 
+        }e;rn fals        retu   
+        `;  
+   div>         </ch
+        not matasswords do      P       i>
+       -circle"></times"fas fa-<i class=                  ">
+  errormatch- class="    <div        = `
+     v.innerHTML  matchDi  
+        else {    } 
+    e;eturn tru    r   ;
+             `v>
+        </di            ch
+ matwords     Pass              
+ cle"></i>ck-cirfa-ches ss="fa<i cla            ">
+        cessh-sucass="matc cliv          <d      HTML = `
+.inner   matchDiv       
+  m) {confirrd === if (passwo                
+
+        }
+turn false; re        '';
+   nerHTML = Div.in match
+           == '') {rm =if (confi
+             atch');
+   rdM('passwotElementByIddocument.gematchDiv = st    con
+     rd').value;womPassiryId('confmentBlegetE = document.rmconst confi;
+        .valueewPassword')ById('ngetElementt.cumen= doord passwst    conh() {
+     sswordMatcheckPafunction c
+    
+    3;
+    }h === ngttreurn s       ret        
+    }
+g');
+     ngth-stron.add('stresList.clas strengthBar            {
+ 3)trength ===if (s } else       
+ medium');trength-add('sssList.clahBar.trengt           s 2) {
+ ength ===(str  } else if ;
+      -weak')rength('stassList.addrengthBar.cl       st {
+     gth === 1)(strenf   i   
+           ength';
+trword-sasssName = 'pr.clastrengthBa        srength');
+asswordSt'pementById(nt.getElcumehBar = dostrengtnst co
+                 });
+       }
+      ;
+      e('valid')ist.removassLent.cl    reqElem          3af';
+  '#9cae.color = tylent.s   elem       ;
+       '○'ntent =tCo element.tex            
+     } else {         +;
+ ngth+   stre         ');
+    .add('validListment.class     reqEle       981';
+    '#10be.color = lement.styl      e  ;
+        = '✓'xtContent lement.te      e
+           {])rements[reqequi  if (r
+                    q`);
+  d(`${req}ReyIentBtElemt.geumenoc dreqElement = const   
+         heck`);`${req}ClementById(tE.gementocuelement = d   const           {
+req =>).forEach(requirementss(eyt.k  Objec   
+          
+        };sword)
+ asest(p: /\d/.t  number
+          rd),passwo.test(zA-Z]/: /[a-er lett         = 8,
+  ord.length >: passw   length       ents = {
+  t requirem    cons
+    0; strength =       let{
+  rd) swongth(pasrewordSteckPasson ch
+    functi() {rmValidationzeFoinitiali
+function 
+);
+});ation(idValrmeFo   initializn() {
+ tiod', funcntLoadeContestener('DOMddEventLint.adocume
+criptvaSttings JaAccount Sean ipt>
+// Cle
+<scrv>
+div>
+</di   </</div>
+     v>
+        </di>
+        /div     <          </a>
+                    >
+ spanSign Out</    <span>                 </i>
+   out-alt">as fa-sign-i class="f           <       ">
+      k-actionss="quic%}" cla'logout' {% url ="ef    <a hr       >
+         </a                 
+   pan> Info</sountrint Acc<span>P                       ></i>
+ fa-print"ass="fas     <i cl                    on">
+"quick-actiass=int()" clprw.ndock="wi#" onclief="     <a hr        a>
+            </            /span>
+    Dashboard<an>Return to     <sp                "></i>
+   ter-altchomefas fa-ta <i class="              
+         -action">"quick" class=ard' %}'dashborl  href="{% u <a                  
+ body">"panel-class=       <div 
+              </div>          
+ 3>ns</hioAct<h3>Quick                    "></i>
+ tfa-bolas <i class="f                   ">
+ l-headerpanediv class="     <       >
+    actions"quick-ummary unt-saccos=" <div clas   
+        ions -->ct Quick A  <!--      
+        </div>
+  v>
+          </di       
+     div>       </          </div>
+                          </div>
+                       
+      endif %}ever{% {% else %}NY H:i" }}e:"M d, st_login|dat.la%}{{ userlast_login f user.        {% i                     
+   le">rity-subtit"secuiv class=  <d                     /div>
+     n<gie">Last Lo-titl"securityv class= <di                      
+     text">"security-lass=div c       <          iv>
+           </d           
+         /i>k"><clocfa-fas <i class="                           
+ icon info">rity-ss="secu <div cla                
+       ">ity-itemsecurdiv class="     <                     
+              /div>
+  <               div>
+        </               </div>
+                          %}
+      et{% endif %}Not Se  elsred{%onfigur.email %}C   {% if use                            itle">
+ curity-subtsev class="    <di                     /div>
+   ail Status<">Emlerity-tits="secudiv clas  <                
+          ity-text">"securlass=   <div c                 
+    /div>  <                     
+ "></i>a-envelopes flass="fa   <i c                       %}">
+  f % ending{rni}wase %cess{% elemail %}suc% if user.ty-icon {"securiiv class=<d                      >
+  ity-item"ss="secur    <div cla                      
+             div>
+    </            v>
+     di   </               div>
+               </                   dif %}
+ure{% ene %}Secquired{% els %}Reset Reswordnge_paser.must_cha {% if us                          le">
+     itbty-su="securitssdiv cla         <                   >
+div Status</e">Passwordtitly-it"securclass=iv     <d                       ext">
+ security-tclass="div      <           
+        /div>         <       >
+        </i">% endif %}e{irclck-clse %}fa-chetriangle{% eexclamation-ssword %}fa-change_paf user.must_s {% iass="fa <i cl                        f %}">
+   ss{% endiccese %}suwarning{% elssword %}_paanger.must_chf useicon {% ity-="securiassv cl      <di         
+         ">curity-itemclass="seiv          <d          
+ l-body">neass="pa<div cl          >
+        </div          3>
+     Status</hSecurity        <h3>       </i>
+     s fa-lock">s="fa<i clas              ">
+      l-header="paneassdiv cl         <       -status">
+urityary secsummount-accass="     <div cl>
+       s --ity Statuecur  <!-- S
+          </div>
+     iv>
+        </d      >
+          </div                  pan>
+          </s             %}
+   ndifve{% e %}Inactise{% elve %}Active_actiuser.is     {% if                       %}">
+  e{% endif-inactiv}status% else %ive{tus-act %}star.is_active if use-badge {%ass="statusspan cl         <       
+        us</span>l">Statary-labess="summlapan c <s                      ">
+ mmary-itemlass="su   <div c                f %}
+  {% endi                >
+   /div     <            
+   an>_id }}</speeloyr.emp usevalue">{{mary-lass="sum     <span c              span>
+     e ID</l">Employeabe="summary-lclassan  <sp                ">
+       y-itemss="summariv cla      <d            ee_id %}
+  r.employ if use    {%               }
+  endif %  {%                  >
+div </                 
+  n }}</span>r.lrue">{{ usemmary-valn class="su <spa                      </span>
+ ">LRN-labelss="summaryla<span c                 
+       ry-item">maum class="s<div            }
+        lrn %if user.{%              v>
+       </di               
+     }}</span>_display get_rolee">{{ user.ry-valu"summan class=      <spa              an>
+    /spole<el">Rsummary-labn class="   <spa                     ry-item">
+="summa<div class                      </div>
+                  }</span>
+ame }.usern">{{ usermmary-valuesuclass="<span                   n>
+      rname</spaUseabel">-l="summarypan class          <s         m">
+     mmary-itess="su    <div cla       
+         ">g: 0;"paddin" style="panel-bodyass= <div cl            div>
+   </              
+  ummary</h3>ccount S      <h3>A      >
+        "></ia-id-cardfas fs="clas     <i            r">
+    -heade="panel <div class            
+   y">ummarnt-scouclass="ac    <div         -->
+ ary Summcount- Ac         <!-
+    <div>      -->
+  unt SummaryPanel - Accoight  <!-- R   
+    iv>
+       </d  </div>
+           div>
+  </      
+        form>          </         
+ >/button     <            
+       e Changes      Sav            
+          ">-secondarys="btnmit" claspe="subtton ty         <bu            
+                       >
+        </div           
+              </div>               ">
+        il addresster emaolder="Enput" placeh="form-in classmail }}"user.ealue="{{ mail" v" name="eaile="emypt t   <inpu                          /label>
+   s<Email Addresel">rm-lab="foclass   <label                            group">
+  orm-class="f<div                           
+                             endif %}
+ %           {              /div>
+      <                      
+    e name"> middlerlder="Ent" placehonput"form-iass=" clname }}iddle_="{{ user.maluename" v"middle_" name=pe="texttynput      <i                         l>
+  e</labee Nam">Middlm-label class="for<label                             ">
+   rm-grouplass="fo c      <div                     
+ me %}le_naif user.midd{%                       ">
+      m-rowss="for  <div cla                            
+                 
+      </div>                  </div>
+                       ">
+      e last namlder="Entercehot" pla="form-inpuclassame }}" r.last_nue="{{ useme" val"last_name="text" naput type= <in                            label>
+   me</t Na-label">Laslass="form    <label c                          roup">
+  "form-glass=v c       <di                           
+               
+           </div>                         name">
+rstEnter fiolder="put" placehm-ins="for" clase }}st_namr.firusealue="{{ name" vme="first_" na"texttype=put         <in                  el>
+      lab Name</abel">Firstass="form-l clbel<la                              ">
+  form-groupass="div cl      <                    ">
+  ="form-rowass <div cl                  
+                             </div>
+                    ame">
+    Enter usernholder="" placeorm-inputclass="fame }}"  user.usern"{{=ue" valusernamet" name=" type="tex      <input                     l>
+ ername</labeel">Usm-laborl class="f<labe                            -group">
+s="formlas     <div c               
+                            
+rofile"> value="prm_type"name="foden" type="hid    <input                  %}
+    _token   {% csrf                 >
+    m"orrofileF="p idost"thod="p <form me                
+   dy">s="panel-bo <div clas               </div>
+            h3>
+    ation</ormal Inf<h3>Person              /i>
+      a-user"><ss="fas fcla    <i           ">
+      derpanel-heass="v cladi <           
+    ">-infosonaly-panel per="securitss   <div cla        on -->
+  Informati- Personal      <!-   /div>
+
+              <</div>
+             m>
+        </for                
+</button>               
+         word Passpdate           U          ">
+       ryprimabtn-" class=e="submit" typ   <button                          
+               </div>
+                           
+ ch"></div>atrd-mpasswoclass="rdMatch" "passwov id=<di                           ssword">
+ our new pairm yonf"Colder=ut" placehrm-inplass="fo" crmPassword" id="confih="8ngtminleuired eq rpassword2"name="new_ord" type="passwinput           <                
+  el>abord</lonfirm Passwrm-label">Cass="fobel cl      <la                      oup">
+rm-gr="fodiv class  <            
+                                 /div>
+    <                   </div>
+                             /div>
+           <                 >
+     (0-9)</spanbers num>Contains    <span                            
+     /span>t-check">○<equiremenlass="r" ccknumberCheid="span     <                           
+     rReq">umbe"n" id=rement-itemquilass="re <div c                           v>
+        </di                            )</span>
+A-Z, a-zletters (an>Contains sp  <                        
+          >an">○</spckement-chequir"res=ck" clasheid="letterCspan         <                         ">
+   rReq="lettetem" idequirement-iclass="r   <div                                </div>
+                          >
+    /spanacters<imum 8 charan>Min       <sp                    >
+         </spant-check">○uiremen"reqass=ck" cllengthChepan id="         <s                          
+ gthReq">lend="item" irequirement-iv class="   <d                             ts">
+menquire"password-ress=v cla<di                           
+ div>rength"></d-st"passwors=las" cengthtrrdS="passwo   <div id                >
+         rd"wotrong passate a s="Creerholdut" place"form-inp class=ewPassword""nd= ingth="8"quired minlessword1" re_pa"newword" name=ype="pass   <input t                        /label>
+ Password<abel">New ass="form-llabel cl      <                  p">
+    rm-grouss="fo    <div cla                     
+                      </div>
+                      rd">
+   sswot parren your cur="Enterplaceholderm-input" s="fo clasuiredssword" reqame="old_paord" ne="passwtypinput       <               
+       d</label>assworrrent Pabel">Cuss="form-lel clalab    <                       ">
+ ouporm-gr"fdiv class=         <                  
+               ">
+      passworde" value="rm_typ" name="fo="hiddentypenput <i                     oken %}
+   csrf_t {%                        rm">
+Fo"password id="postm method="  <for                 ">
+ "panel-body class=        <divv>
+          </di            gs</h3>
+  urity Settin  <h3>Sec                 </i>
+ eld-alt">as fa-shi="f   <i class           ">
+      el-header class="pan       <div         ">
+rity-panel="secu  <div class         -->
+  ngsy Setticurit <!-- Se     
+
+      %}f    {% endi
+         iv>      </d    </div>
+                 em.</p>
+  the systing to usentinuefore cor password byout reset ou museasons, yty rp>For securi     <            h4>
+   </ Requiredword Resetassh4>P          <    >
+      "ntentrning-colass="wa     <div c         ></i>
+  e"nglation-trias fa-exclam"fass=la       <i c  ">
+       rtng-ale"warniss=la <div c        %}
+    ge_passworder.must_chan{% if us        -->
+    ng WarniReset Password      <!-- 
+           <div>-->
+    Settings n  Maianel -- Left P  <!->
+      ainer"gs-cont="settinclass  <div 
+  >"rappert-settings-w="accounv class}
+<dintent %ck co% blo %}
+
+{endblocke>
+{% 
+</styl400e;
+    }92: #       color: 14px;
+ ont-size   f;
+     n: 0rgi        mantent p {
+ning-cowar  
+    .   }
+  
+ e;or: #92400     col
+   00;ight: 6t-we   fon6px;
+     ont-size: 1   fx 0;
+     4pn: 0 0 gi   mar   {
+  content h4    .warning-    
+     }
+op: 2px;
+   margin-t0px;
+     -size: 2font        #f59e0b;
+color:  {
+        t ialer .warning-    
+     }
+: 12px;
+  
+        gaptart;-ss: flexlign-item
+        aflex;: ay   displpx;
+     -bottom: 25    margin
+    6px;adding: 1  p   
+   s: 8px;diu   border-ra
+     0b;solid #f59erder: 1px 
+        bof3c7;ground: #fe        back
+g-alert {inrn.wart */
+    lening A    /* War   }
+    
+   }
+     20px;
+ ng: ddi         pa{
+   apper ngs-wrunt-setti      .acco  
+     
+        }
+   umns: 1fr;emplate-col     grid-tw {
+       .form-ro           
+       }
+   ;
+    gap: 20px      
+     : 1fr;ate-columnspl  grid-tem         r {
+ s-containeetting     .s8px) {
+   dth: 76ax-wi  @media (mgn */
+  onsive Desiesp  
+    /* R    }
+0px;
+  om: 2in-bott       margpx;
+ gap: 15
+        r;1fr 1fe-columns: -templat grid       
+lay: grid;       disp {
+ form-row    .
+    
+    }x;
+-top: 25p     margin
+   fo {onal-inrs .pe*/
+   ction SeInformation Personal   /*  
+     44;
+    }
+r: #ef44   colo {
+     ror.match-er  
+    
+    }
+  10b981;    color: #  
+  ess {h-succmatc    .
+    
+0;
+    }weight: 50     font-
+   13px;ze: ont-si  f
+      : 10px;opmargin-t {
+        ssword-match*/
+    .padicator atch Insword M /* Pas
+      }
+    ;
+ dth: 100% wi81;
+       ound: #10b9ackgr
+        b { ngrength-stro.st    }
+    
+  ;
+  th: 66%        wid: #f59e0b;
+ackground
+        b { h-medium  .strengt
+    
+  %;
+    }33    width: 444;
+     #ef4ckground:        ba-weak { 
+   .strength
+    
+ ;
+    }th: 0%      wids ease;
+  ll 0.3on: a    transiti   ;
+ : #f3f4f6und backgro      p: 10px;
+ argin-to  m    x;
+   2ps:diurder-ra      bopx;
+  : 4eight  h     ngth {
+ ssword-stre
+    .pa*/ngth Bar assword Stre* P  
+    /
+  
+    }old;nt-weight: b     fo   center;
+xt-align:       te: 16px;
+    widthk {
+      checuirement-
+    .req    
+    }
+: #10b981;       color
+ .valid {rement-itemequi
+    .r    }
+ 
+   tom: 0;n-bot      margi
+  ast-child {ment-item:l  .require
+  }
+    280;
+    color: #6b7
+        om: 8px; margin-bott      : 13px;
+ -sizent
+        fo  gap: 8px;
+      center;s: -item   align   
+   flex;splay: di   {
+     itemt-.requiremen
+      }
+    ;
+  7eb #e5ex solid 1p   border:;
+     us: 8pxborder-radi   
+     9fafb;ound: #fkgr      bac15px;
+  g:   paddin
+      x;top: 15p   margin-  nts {
+   -requiremeword  .passts */
+  Requiremenrd    /* Passwo
+ 
+    ;
+    }er: cent-alignext    t0px;
+    h: 2      widtx;
+  : 16pizet-s   foni {
+     action ck-qui    . 
+
+    }  eX(4px);
+ anslatsform: trtran
+        n: none;ecoratio-d  text;
+      lor: #e5e7ebder-co     bor;
+   or: #10b981
+        colb;f9fafackground: #
+        bver {on:hok-acti .quic
+    
+   
+    }sparent; tranr: 1px solidrde    boase;
+    2s e 0.tion: all transi    x;
+   -bottom: 8p      margin 8px;
+  radius:er-       bord #6b7280;
+    color:
+     none;ion: t-decorat     tex
+   x 16px;adding: 12p       p
+ px;   gap: 12;
+     ems: center-it    align
+    flex;splay:         dition {
+ac
+    .quick-    }
+    
+top: 20px;    margin-ns {
+    tiock-ac    .quins */
+ick Actio 
+    /* Qu  }
+    0;
+  0 0 2px  margin:
+        #6b7280; color:
+       ize: 12px;t-s
+        fonsubtitle {curity-
+    .se    }
+    0;
+in:   marg      937;
+color: #1f2
+        600;weight:     font-px;
+     14t-size:  fon     itle {
+ y-t.securit
+    
+    ;
+    }    flex: 1 {
+    ecurity-text
+    .s  }
+    e40af;
+   color: #1    
+   : #dbeafe;ound  backgr{
+      con.info urity-i 
+    .sec  }
+   92400e;
+  lor: #
+        cond: #fef3c7;backgrou       ning {
+ icon.war.security-
+    }
+    
+     #065f46; color:       fae5;
+ound: #d1  backgrs {
+      ccesn.suurity-ico
+    .sec }
+    px;
+   : 14size    font-    center;
+tent: ustify-con;
+        jms: centeralign-ite       
+ : flex;   display%;
+     radius: 50r-de       bort: 32px;
+ heigh;
+        : 32px   width   n {
+  icoecurity-
+    .s    e;
+    }
+bottom: non  border-    ild {
+  em:last-ch-itcurity    .se   }
+    
+4f6;
+ lid #f3fttom: 1px so border-bo
+       12px 0;g:      paddin
+     gap: 12px;r;
+      s: cente  align-item
+      lay: flex;        disp
+ {ty-itemcuri  
+    .se
+    }
+  20px;in-top:        marg{
+ status ecurity-*/
+    .sStatus curity Se/*   
+      }
+    0e;
+ #9240    color:c7;
+    #fef3ackground:      be {
+   ivstatus-inact    .
+    
+
+    }r: #065f46;  colo
+      e5;#d1fad: backgroun        {
+us-active   .stat
+  
+    e;
+    }uppercastransform:  text-     
+  600;ight: wefont-    2px;
+    -size: 1  fontx;
+      20p-radius:  border      4px 12px;
+  padding: 
+       dge {ba  .status-dge */
+  tatus Ba
+    /* S
+    937;
+    }lor: #1f2 co   ;
+    ht: 600-weignt        fo14px;
+ font-size: 
+       mary-value {  .sum 
+     }
+    #6b7280;
+ lor:        co
+weight: 500; font-px;
+       e: 14t-siz    fon
+    -label {marysum    . 
+
+    }
+   om: none;er-bott  bord     ild {
+ ast-chary-item:l  .summ    
+   }
+
+   r;tems: cente align-in;
+       space-betweey-content:       justif
+  ex;splay: fl di       3f4f6;
+ solid #f: 1pxomottr-brde     box;
+   ng: 15px 20p    paddi  {
+  item .summary-       }
+    
+ent;
+ it-conteight: f       h
+ 0, 0.05);a(0, 0, gb6px rx hadow: 0 4px-s     bo  dding: 0;
+        pa: 12px;
+ rder-radius    bo
+    5e7eb; #eolid s border: 2px
+       ffffff;round: #      backg   {
+ount-summary   .accummary */
+ Account S - Panel  /* Right   
+    }
+  );
+  pxeY(-1slatm: tran    transfor  
+  b981;color: #10    b981;
+    olor: #10r-c   borde
+     :hover {ondary  .btn-sec  
+  
+    }
+  ;width: 100%       
+ se;eaall 0.2s ansition:        trer;
+ pointor: urs;
+        c-weight: 600        fontpx;
+ 14t-size:
+        fon2px 24px;adding: 1  p      us: 8px;
+-radi  bordereb;
+      id #e5e7der: 2px sol     bor   151;
+color: #374    
+    ffff;ground: #ffback        ndary {
+n-seco
+    .bt   
+ 
+    }x);eY(-1pm: translat transfor
+        #059669;ground:     backver {
+   imary:ho  .btn-pr  
+  
+    }
+  dth: 100%;   wi    .2s ease;
+ on: all 0sitiran t
+       or: pointer; curs;
+       600ight: font-we      : 14px;
+  izent-s        fo2px 24px;
+padding: 1     : 8px;
+   order-radius
+        be; nonder:or  b      ;
+white   color:      10b981;
+ckground: # ba       -primary {
+    .btnttons */
+
+    /* Bu  }
+    #10b981;
+  der-color:        bor
+ t:hover {rm-inpu    .fo
+     }
+   0.1);
+29, , 185, 1x rgba(16 3p 0 0 0dow:ha-s     box
+   : #10b981;order-color
+        be: none;     outlin   focus {
+orm-input:
+    .f    }
+
+    x; border-boizing: box-sse;
+       all 0.2s eansition:   tra   
+   ffffff;nd: #ou   backgr  7;
+   293  color: #1f     ze: 14px;
+ -si      fontpx 16px;
+  ng: 12     paddis: 8px;
+   rder-radiu  bo7eb;
+      d #e5e: 2px soli    border100%;
+         width: {
+   t form-inpu    
+    .
+    }
+ 8px;-bottom:   margin;
+     4151 color: #37        600;
+font-weight:        14px;
+ ize:nt-s    foock;
+    lay: bl        disp{
+-label   .form  
+  
+    }
+   20px;in-bottom:     margup {
+   orm-gro */
+    .form Elements* F   / }
+    
+ 25px;
+   g: ddin pa     
+  y { .panel-bod     }
+    
+  : 600;
+eight      font-wx;
+  e: 18p    font-siz 0;
+    n:gi  mar {
+      eader h3    .panel-h    
+   }
+
+ 20px;: nt-size  fo     eader i {
+ panel-h 
+    .
+   ;
+    }12px       gap: center;
+ ms: -ite      alignflex;
+  lay:    disp    0 0;
+ x 10px 

@@ -1,0 +1,163 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Prohibited Acts Dashboard - SIRMS{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 py-8">
+    <div class="mb-6">
+        <h1 class="text-4xl font-bold text-red-700 mb-2">🚫 Prohibited Acts Dashboard</h1>
+        <p class="text-gray-600">Monitor and analyze prohibited acts violations</p>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
+        <div class="bg-red-50 border border-red-200 rounded-lg p-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm text-red-600 font-medium">Total Prohibited Acts</p>
+                    <p class="text-3xl font-bold text-red-700">{{ total_prohibited }}</p>
+                </div>
+                <i class="fas fa-ban text-4xl text-red-400"></i>
+            </div>
+        </div>
+        <div class="bg-orange-50 border border-orange-200 rounded-lg p-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm text-orange-600 font-medium">Repeat Offenders</p>
+                    <p class="text-3xl font-bold text-orange-700">{{ repeat_offenders_count }}</p>
+                </div>
+                <i class="fas fa-user-times text-4xl text-orange-400"></i>
+            </div>
+        </div>
+        <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm text-yellow-600 font-medium">Active Filters</p>
+                    <p class="text-3xl font-bold text-yellow-700">{{ prohibited_acts|length }}</p>
+                </div>
+                <i class="fas fa-filter text-4xl text-yellow-400"></i>
+            </div>
+        </div>
+        <div class="bg-purple-50 border border-purple-200 rounded-lg p-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm text-purple-600 font-medium">Filtered Results</p>
+                    <p class="text-3xl font-bold text-purple-700">{{ reports|length }}</p>
+                </div>
+                <i class="fas fa-list text-4xl text-purple-400"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+        <form method="GET" class="grid grid-cols-1 md:grid-cols-6 gap-4">
+            <input type="text" name="search" value="{{ search_query }}" placeholder="Search by case ID, name, LRN..." 
+                   class="px-4 py-2 border border-gray-300 rounded-lg">
+            <select name="prohibited_act" class="px-4 py-2 border border-gray-300 rounded-lg">
+                <option value="">All Prohibited Acts</option>
+                {% for act in prohibited_acts %}
+                <option value="{{ act.id }}" {% if prohibited_act_filter == act.id|stringformat:"s" %}selected{% endif %}>{{ act.name }}</option>
+                {% endfor %}
+            </select>
+            <select name="grade" class="px-4 py-2 border border-gray-300 rounded-lg">
+                <option value="">All Grades</option>
+                {% for grade in "789101112"|make_list %}
+                <option value="{{ grade }}" {% if grade_filter == grade %}selected{% endif %}>Grade {{ grade }}</option>
+                {% endfor %}
+            </select>
+            <input type="date" name="date_from" value="{{ date_from }}" placeholder="From Date" 
+                   class="px-4 py-2 border border-gray-300 rounded-lg">
+            <input type="date" name="date_to" value="{{ date_to }}" placeholder="To Date" 
+                   class="px-4 py-2 border border-gray-300 rounded-lg">
+            <div class="flex space-x-2">
+                <button type="submit" class="flex-1 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg">
+                    <i class="fas fa-search"></i> Filter
+                </button>
+                <label class="flex items-center space-x-2 cursor-pointer">
+                    <input type="checkbox" name="repeat_offender" value="true" {% if repeat_offender == 'true' %}checked{% endif %} 
+                           class="rounded border-gray-300 text-red-600 focus:ring-red-500">
+                    <span class="text-sm text-gray-700">Repeat Offenders Only</span>
+                </label>
+            </div>
+        </form>
+    </div>
+
+    <!-- Most Common Prohibited Acts -->
+    <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+        <h3 class="text-xl font-bold text-gray-800 mb-4">Most Common Prohibited Acts</h3>
+        <div class="space-y-3">
+            {% for item in most_common %}
+            <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                <span class="font-medium text-gray-800">{{ item.incident_type__name }}</span>
+                <span class="px-3 py-1 bg-red-100 text-red-800 rounded-full font-bold">{{ item.count }}</span>
+            </div>
+            {% empty %}
+            <p class="text-gray-500">No data available</p>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Reports Table -->
+    <div class="bg-white rounded-lg shadow-md overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-red-50">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">Case ID</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">Student</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">Prohibited Act</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">Grade/Section</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">Date</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">Status</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    {% for report in reports %}
+                    <tr class="hover:bg-gray-50">
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ report.case_id }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="text-sm font-medium text-gray-900">
+                                {{ report.reported_student.get_full_name|default:"Not specified" }}
+                            </div>
+                            {% if report.reported_student.lrn %}
+                            <div class="text-sm text-gray-500">LRN: {{ report.reported_student.lrn }}</div>
+                            {% endif %}
+                        </td>
+                        <td class="px-6 py-4">
+                            <div class="text-sm font-medium text-red-600">{{ report.incident_type.name }}</div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            {{ report.grade_level }}{% if report.section_name %} - {{ report.section_name }}{% endif %}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ report.incident_date }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="px-2 py-1 text-xs font-semibold rounded-full 
+                                {% if report.status == 'pending' %}bg-yellow-100 text-yellow-800
+                                {% elif report.status == 'resolved' %}bg-green-100 text-green-800
+                                {% else %}bg-blue-100 text-blue-800{% endif %}">
+                                {{ report.get_status_display }}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                            <a href="{% url 'report_detail' report.case_id %}" class="text-blue-600 hover:text-blue-900">
+                                <i class="fas fa-eye"></i> View
+                            </a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="7" class="px-6 py-4 text-center text-gray-500">No prohibited acts found</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+
+

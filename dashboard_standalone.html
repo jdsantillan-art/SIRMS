@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - SIRMS</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <style>
+        body {
+            overflow-x: hidden;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background-color: #f8fafc;
+        }
+        .compact-chart { 
+            height: 200px !important;
+            max-height: 200px !important;
+        }
+        .mini-card { 
+            padding: 0.75rem !important; 
+        }
+        .dashboard-container {
+            max-width: 100%;
+            overflow-x: hidden;
+        }
+        .chart-wrapper {
+            position: relative;
+            height: 200px;
+            width: 100%;
+        }
+        canvas {
+            max-width: 100% !important;
+            height: auto !important;
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <div class="dashboard-container max-w-7xl mx-auto px-4 py-3">
+        <!-- Header with Filter -->
+        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-4 gap-3">
+            <h1 class="text-2xl font-bold text-gray-800">
+                📊 Discipline Office Dashboard
+            </h1>
+            <select id="timeFilter" class="border border-emerald-300 rounded-lg px-4 py-2 text-sm bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                <option value="monthly" selected>Monthly View</option>
+                <option value="quarterly">Quarterly View</option>
+                <option value="yearly">Yearly View</option>
+            </select>
+        </div>
+
+        <!-- Counter Cards - Compact -->
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
+            <div class="bg-white rounded-xl p-4 shadow-md border-l-4 border-emerald-500 hover:shadow-lg transition-shadow">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-xs text-gray-500 uppercase tracking-wide font-medium">Total Reports</p>
+                        <p class="text-2xl font-bold text-gray-800 mt-1" id="totalReports">45</p>
+                    </div>
+                    <div class="bg-emerald-100 p-3 rounded-lg">
+                        <i class="fas fa-file-alt text-emerald-600 text-xl"></i>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-white rounded-xl p-4 shadow-md border-l-4 border-orange-500 hover:shadow-lg transition-shadow">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-xs text-gray-500 uppercase tracking-wide font-medium">Pending</p>
+                        <p class="text-2xl font-bold text-gray-800 mt-1" id="pendingReports">12</p>
+                    </div>
+                    <div class="bg-orange-100 p-3 rounded-lg">
+                        <i class="fas fa-clock text-orange-600 text-xl"></i>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-white rounded-xl p-4 shadow-md border-l-4 border-blue-500 hover:shadow-lg transition-shadow">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-xs text-gray-500 uppercase tracking-wide font-medium">Handled by DO</p>
+                        <p class="text-2xl font-bold text-gray-800 mt-1" id="minorCases">20</p>
+                    </div>
+                    <div class="bg-blue-100 p-3 rounded-lg">
+                        <i class="fas fa-check-circle text-blue-600 text-xl"></i>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-white rounded-xl p-4 shadow-md border-l-4 border-purple-500 hover:shadow-lg transition-shadow">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-xs text-gray-500 uppercase tracking-wide font-medium">Sent to Counselor</p>
+                        <p class="text-2xl font-bold text-gray-800 mt-1" id="majorCases">13</p>
+                    </div>
+                    <div class="bg-purple-100 p-3 rounded-lg">
+                        <i class="fas fa-arrow-right text-purple-600 text-xl"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Data Analytics Section - Power BI Style Professional Design -->
+        <div class="mt-6 space-y-4">
+            <div class="bg-white rounded-lg shadow-md border border-gray-200 overflow-hidden">
+                <!-- Chart 1: What Month Most Report (Top) -->
+                <div class="p-6 border-b border-gray-200">
+                    <div class="mb-4">
+                        <h3 class="text-xl font-bold text-gray-800 mb-1">What Month Most Report</h3>
+                        <p class="text-sm text-gray-500">Distribution of incident reports across months</p>
+                    </div>
+                    <div class="chart-wrapper" style="height: 320px;">
+                        <canvas id="monthChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-lg shadow-md border border-gray-200 overflow-hidden">
+                <!-- Chart 2: Reports by Grade Level (Middle) -->
+                <div class="p-6 border-b border-gray-200">
+                    <div class="mb-4">
+                        <h3 class="text-xl font-bold text-gray-800 mb-1">Reports by Grade Level</h3>
+                        <p class="text-sm text-gray-500">Number of incident reports by grade level</p>
+                    </div>
+                    <div class="chart-wrapper" style="height: 320px;">
+                        <canvas id="gradeChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-lg shadow-md border border-gray-200 overflow-hidden">
+                <!-- Chart 3: Prohibited Acts vs. Other School Policies (Bottom) -->
+                <div class="p-6">
+                    <div class="mb-4">
+                        <h3 class="text-xl font-bold text-gray-800 mb-1">Prohibited Acts vs. Other School Policies Reported</h3>
+                        <p class="text-sm text-gray-500">Distribution of prohibited acts versus other school policy violations</p>
+                    </div>
+                    <div class="chart-wrapper" style="height: 320px;">
+                        <canvas id="violationChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Global chart instances
+        let gradeChartInstance = null;
+        let monthChartInstance = null;
+        let violationChartInstance = null;
+
+        // Sample data
+        const sampleMonthData = [
+            {month: 'Jan', reports: 5},
+            {month: 'Feb', reports: 8},
+            {month: 'Mar', reports: 3},
+            {month: 'Apr', reports: 12},
+            {month: 'May', reports: 7},
+            {month: 'Jun', reports: 9},
+            {month: 'Jul', reports: 4},
+            {month: 'Aug', reports: 6},
+            {month: 'Sep', reports: 8},
+            {month: 'Oct', reports: 10},
+            {month: 'Nov', reports: 7},
+            {month: 'Dec', reports: 5}
+        ];
+
+        const sampleGradeData = [
+            {grade: 'Grade 7', count: 3},
+            {grade: 'Grade 8', count: 5},
+            {grade: 'Grade 9', count: 2},
+            {grade: 'Grade 10', count: 4},
+            {grade: 'Grade 11', count: 6},
+            {grade: 'Grade 12', count: 1}
+        ];
+
+        const sampleViolationData = [
+            {name: 'Prohibited Acts', value: 28},
+            {name: 'Other School Policies', value: 17}
+        ];
+
+        // Wait for Chart.js to load
+        function initCharts() {
+            if (typeof Chart === 'undefined') {
+                console.log('Waiting for Chart.js...');
+                setTimeout(initCharts, 100);
+                return;
+            }
+            
+            console.log('Chart.js ready!');
+            createDashboardCharts();
+            
+            // Add event listener for time filter
+            const timeFilter = document.getElementById('timeFilter');
+            if (timeFilter) {
+                timeFilter.addEventListener('change', function() {
+                    updateDashboardData(this.value);
+                });
+            }
+        }
+
+        // Function to update dashboard data based on time filter
+        function updateDashboardData(filter) {
+            console.log('Updating dashboard with filter:', filter);
+            
+            // Show loading state
+            const charts = document.querySelectorAll('canvas');
+            charts.forEach(canvas => {
+                canvas.style.opacity = '0.5';
+            });
+            
+            // Simulate API call with timeout
+            setTimeout(() => {
+                // Generate different data based on filter
+                let monthData = [...sampleMonthData];
+                let gradeData = [...sampleGradeData];
+                let violationData = [...sampleViolationData];
+                
+                if (filter === 'quarterly') {
+                    // Aggregate by quarters
+                    monthData = [
+                        {month: 'Q1', reports: 16},
+                        {month: 'Q2', reports: 28},
+                        {month: 'Q3', reports: 18},
+                        {month: 'Q4', reports: 22}
+                    ];
+                } else if (filter === 'yearly') {
+                    // Show yearly trend
+                    monthData = [
+                        {month: '2022', reports: 85},
+                        {month: '2023', reports: 102},
+                        {month: '2024', reports: 84}
+                    ];
+                }
+                
+                // Update charts with new data
+                updateCharts({
+                    month_data: monthData,
+                    grade_data: gradeData,
+                    violation_type_data: violationData
+                });
+                
+                // Remove loading state
+                charts.forEach(canvas => {
+                    canvas.style.opacity = '1';
+                });
+            }, 500);
+        }
+
+        // Function to update existing charts with new data
+        function updateCharts(data) {
+            // Update month chart
+            if (monthChartInstance && data.month_data) {
+                monthChartInstance.data.labels = data.month_data.map(d => d.month);
+                monthChartInstance.data.datasets[0].data = data.month_data.map(d => d.reports);
+                monthChartInstance.update();
+            }
+            
+            // Update grade chart
+            if (gradeChartInstance && data.grade_data) {
+                gradeChartInstance.data.labels = data.grade_data.map(d => d.grade.replace('Grade ', 'G'));
+                gradeChartInstance.data.datasets[0].data = data.grade_data.map(d => d.count);
+                gradeChartInstance.update();
+            }
+            
+            // Update violation chart
+            if (violationChartInstance && data.violation_type_data) {
+                violationChartInstance.data.labels = data.violation_type_data.map(d => d.name);
+                violationChartInstance.data.datasets[0].data = data.violation_type_data.map(d => d.value);
+                violationChartInstance.update();
+            }
+        }
+
+        function createDashboardCharts() {
+            console.log('=== Dashboard Loading ===');
+            console.log('Chart.js loaded:', typeof Chart !== 'undefined');
+            
+            // Chart 1: What Month Most Report (Top) - Wave/Line Graph
+            monthChartInstance = new Chart(document.getElementById('monthChart'), {
+                type: 'line',
+                data: {
+                    labels: sampleMonthData.map(d => d.month),
+                    datasets: [{
+                        label: 'Number of Reports',
+                        data: sampleMonthData.map(d => d.reports),
+                        borderColor: '#2563EB',
+                        backgroundColor: 'rgba(37, 99, 235, 0.1)',
+                        borderWidth: 3,
+                        fill: true,
+                        tension: 0.4,
+                        pointRadius: 5,
+                        pointHoverRadius: 7,
+                        pointBackgroundColor: '#2563EB',
+                        pointBorderColor: '#fff',
+                        pointBorderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'top',
+                            labels: {
+                                font: { size: 13, weight: '600' },
+                                padding: 15,
+                                usePointStyle: true
+                            }
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(0, 0, 0, 0.85)',
+                            padding: 12,
+                            titleFont: { size: 13, weight: 'bold' },
+                            bodyFont: { size: 12 },
+                            cornerRadius: 6
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: { 
+                                color: 'rgba(0, 0, 0, 0.05)',
+                                drawBorder: false
+                            },
+                            ticks: { 
+                                font: { size: 11 },
+                                color: '#6B7280'
+                            }
+                        },
+                        x: {
+                            grid: { 
+                                display: false,
+                                drawBorder: false
+                            },
+                            ticks: { 
+                                font: { size: 11 },
+                                color: '#6B7280'
+                            }
+                        }
+                    }
+                }
+            });
+            
+            // Chart 2: Reports by Grade Level (Middle) - Bar Chart
+            const maxGradeCount = Math.max(...sampleGradeData.map(d => d.count), 1);
+            const yAxisMax = Math.ceil(maxGradeCount / 2) * 2 + 2;
+            
+            gradeChartInstance = new Chart(document.getElementById('gradeChart'), {
+                type: 'bar',
+                data: {
+                    labels: sampleGradeData.map(d => d.grade.replace('Grade ', 'G')),
+                    datasets: [{
+                        label: 'Number of Reports',
+                        data: sampleGradeData.map(d => d.count),
+                        backgroundColor: '#10B981',
+                        borderRadius: 6,
+                        barThickness: 40,
+                        hoverBackgroundColor: '#059669'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'top',
+                            labels: {
+                                font: { size: 13, weight: '600' },
+                                padding: 15,
+                                usePointStyle: true
+                            }
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(0, 0, 0, 0.85)',
+                            padding: 12,
+                            titleFont: { size: 13, weight: 'bold' },
+                            bodyFont: { size: 12 },
+                            cornerRadius: 6
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: yAxisMax,
+                            grid: { 
+                                color: 'rgba(0, 0, 0, 0.05)',
+                                drawBorder: false
+                            },
+                            ticks: {
+                                stepSize: 2,
+                                font: { size: 11 },
+                                color: '#6B7280'
+                            }
+                        },
+                        x: {
+                            grid: { 
+                                display: false,
+                                drawBorder: false
+                            },
+                            ticks: { 
+                                font: { size: 11 },
+                                color: '#6B7280'
+                            }
+                        }
+                    }
+                }
+            });
+            
+            // Chart 3: Prohibited Acts vs. Other School Policies (Bottom) - Pie Chart
+            violationChartInstance = new Chart(document.getElementById('violationChart'), {
+                type: 'pie',
+                data: {
+                    labels: sampleViolationData.map(d => d.name),
+                    datasets: [{
+                        data: sampleViolationData.map(d => d.value),
+                        backgroundColor: ['#DC2626', '#3B82F6'],
+                        borderWidth: 3,
+                        borderColor: '#fff',
+                        hoverOffset: 8
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                boxWidth: 18,
+                                padding: 20,
+                                font: { size: 13, weight: '600' },
+                                usePointStyle: true,
+                                pointStyle: 'circle'
+                            }
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(0, 0, 0, 0.85)',
+                            padding: 12,
+                            titleFont: { size: 13, weight: 'bold' },
+                            bodyFont: { size: 12 },
+                            cornerRadius: 6,
+                            callbacks: {
+                                label: function(context) {
+                                    const label = context.label || '';
+                                    const value = context.parsed || 0;
+                                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                    const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : 0;
+                                    return `${label}: ${value} (${percentage}%)`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+            
+            console.log('=== Dashboard Loaded Successfully ===');
+        }
+
+        // Start initialization
+        document.addEventListener('DOMContentLoaded', initCharts);
+    </script>
+</body>
+</html>
+
+
+
+
+

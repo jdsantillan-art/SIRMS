@@ -1,0 +1,1063 @@
+{% extends 'base.html' %}
+
+{% block title %}Report Incident - SIRMS{% endblock %}
+{% block page_title %}Report Incident{% endblock %}
+
+{% block content %}
+<div class="max-w-5xl mx-auto px-4 py-3">
+
+    <div class="bg-white/95 backdrop-blur-xl rounded-3xl shadow-2xl border border-gray-100 overflow-hidden">
+        <!-- Header -->
+        <div class="bg-gradient-to-r from-emerald-600 to-teal-600 px-5 py-2.5">
+            <div class="flex items-center justify-between text-white">
+                <div class="flex items-center space-x-2">
+                    <i class="fas fa-shield-alt text-sm"></i>
+                    <span class="font-bold text-base">Report Incident</span>
+                </div>
+                <div class="text-xs opacity-90">* Required</div>
+            </div>
+        </div>
+
+        <form method="post" enctype="multipart/form-data" id="incident-form" class="p-4">
+            {% csrf_token %}
+
+            <!-- Success/Info Messages -->
+            {% if messages %}
+            <div class="mb-3 space-y-1.5">
+                {% for message in messages %}
+                <div class="{% if message.tags == 'error' %}bg-red-50/80 border border-red-200{% elif message.tags == 'success' %}bg-green-50/80 border border-green-200{% else %}bg-blue-50/80 border border-blue-200{% endif %} rounded-lg p-1.5 flex items-start space-x-1.5 shadow-sm">
+                    <div class="flex-shrink-0 mt-0.5">
+                        {% if message.tags == 'error' %}
+                        <i class="fas fa-exclamation-circle text-red-500 text-xs"></i>
+                        {% elif message.tags == 'success' %}
+                        <i class="fas fa-check-circle text-green-500 text-xs"></i>
+                        {% else %}
+                        <i class="fas fa-info-circle text-blue-500 text-xs"></i>
+                        {% endif %}
+                    </div>
+                    <p class="text-xs {% if message.tags == 'error' %}text-red-700{% elif message.tags == 'success' %}text-green-700{% else %}text-blue-700{% endif %} leading-tight flex-1">{{ message }}</p>
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            <!-- Error Messages -->
+            {% if form.errors or form.non_field_errors %}
+            <div class="mb-3 space-y-1.5">
+                {% if form.non_field_errors %}
+                <div class="bg-red-50/80 border border-red-200 rounded-lg p-1.5 flex items-start space-x-1.5 shadow-sm">
+                    <div class="flex-shrink-0 mt-0.5">
+                        <i class="fas fa-exclamation-circle text-red-500 text-xs"></i>
+                    </div>
+                    <div class="flex-1">
+                        {% for error in form.non_field_errors %}
+                        <p class="text-xs text-red-700 leading-tight">{{ error }}</p>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+                {% for field in form %}
+                    {% if field.errors %}
+                    <div class="bg-red-50/80 border border-red-200 rounded-lg p-1.5 flex items-start space-x-1.5 shadow-sm">
+                        <div class="flex-shrink-0 mt-0.5">
+                            <i class="fas fa-exclamation-circle text-red-500 text-xs"></i>
+                        </div>
+                        <div class="flex-1">
+                            <p class="text-xs font-semibold text-red-700">{{ field.label }}:</p>
+                            {% for error in field.errors %}
+                            <p class="text-xs text-red-700 leading-tight">{{ error }}</p>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            <!-- Combined: Reporter & Academic Info -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-3 pb-3 border-b border-gray-200">
+                <!-- Reporter Information -->
+                <div>
+                    <div class="flex items-center space-x-1.5 mb-2">
+                        <div class="bg-emerald-100 p-1 rounded-lg">
+                            <i class="fas fa-user text-emerald-600 text-xs"></i>
+                        </div>
+                        <h2 class="text-sm font-bold text-gray-900">Reporter Info</h2>
+                    </div>
+                    <div class="space-y-2">
+                        <div class="grid grid-cols-2 gap-2">
+                            <div class="group">
+                                <label class="block text-xs font-semibold text-gray-700 mb-0.5">First Name <span class="text-red-500">*</span></label>
+                                {{ form.reporter_first_name }}
+                            </div>
+                            <div class="group">
+                                <label class="block text-xs font-semibold text-gray-700 mb-0.5">Last Name <span class="text-red-500">*</span></label>
+                                {{ form.reporter_last_name }}
+                            </div>
+                        </div>
+                        <div class="group">
+                            <label class="block text-xs font-semibold text-gray-700 mb-0.5">Middle Name</label>
+                            {{ form.reporter_middle_name }}
+                        </div>
+                        <div class="group">
+                            <label class="block text-xs font-semibold text-gray-700 mb-0.5">
+                                {% if user.role == 'student' %}LRN{% else %}Employee ID{% endif %}
+                            </label>
+                            <input type="text" 
+                                   value="{% if user.role == 'student' %}{{ user.lrn|default:'' }}{% else %}{{ user.employee_id|default:'' }}{% endif %}" 
+                                   readonly
+                                   class="w-full px-2.5 py-1.5 text-sm border-2 border-gray-200 rounded-xl bg-gray-50 transition-all outline-none"
+                                   placeholder="{% if user.role == 'student' %}LRN{% else %}Employee ID{% endif %}">
+                        </div>
+                        <div class="group">
+                            <label class="block text-xs font-semibold text-gray-700 mb-0.5">Gender</label>
+                            {{ form.student_gender }}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Academic Information -->
+                <div>
+                    <div class="flex items-center space-x-1.5 mb-2">
+                        <div class="bg-cyan-100 p-1 rounded-lg">
+                            <i class="fas fa-graduation-cap text-cyan-600 text-xs"></i>
+                        </div>
+                        <h2 class="text-sm font-bold text-gray-900">Academic Info</h2>
+                    </div>
+                    <div class="space-y-2">
+                        <div class="group">
+                            <label class="block text-xs font-semibold text-gray-700 mb-0.5">Curriculum <span class="text-red-500">*</span></label>
+                            {{ form.curriculum }}
+                        </div>
+                        <div class="grid grid-cols-2 gap-2">
+                            <div class="group">
+                                <label class="block text-xs font-semibold text-gray-700 mb-0.5">Grade Level</label>
+                                {{ form.grade_level }}
+                            </div>
+                            <div class="group">
+                                <label class="block text-xs font-semibold text-gray-700 mb-0.5">Section</label>
+                                {{ form.section_name }}
+                            </div>
+                        </div>
+                        <div class="group">
+                            <label class="block text-xs font-semibold text-gray-700 mb-0.5">Track</label>
+                            <input type="text" id="id_track_display" readonly 
+                                   class="w-full px-2.5 py-1.5 text-sm border-2 border-gray-200 rounded-xl bg-gray-50 transition-all outline-none"
+                                   placeholder="Auto-filled from section">
+                            <input type="hidden" name="track_code" id="id_track_code" value="">
+                        </div>
+                        <div class="group">
+                            <label class="block text-xs font-semibold text-gray-700 mb-0.5">Teacher</label>
+                            {{ form.teacher_name }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- NEW: Reporter is Victim & Party Type -->
+            <div class="mb-3 pb-3 border-b border-gray-200">
+                <div class="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-3">
+                    <label class="flex items-center cursor-pointer">
+                        <input type="checkbox" name="reporter_is_victim" id="reporterIsVictim" class="mr-2 h-4 w-4">
+                        <span class="text-sm font-semibold text-gray-800">
+                            <i class="fas fa-user-check text-blue-600 mr-2"></i>
+                            I am a victim/involved party in this incident
+                        </span>
+                    </label>
+                </div>
+
+                <div class="group mb-3">
+                    <label class="block text-xs font-semibold text-gray-700 mb-1">
+                        Involved Party Type <span class="text-red-500">*</span>
+                    </label>
+                    <select name="party_type" id="partyType" class="w-full px-3 py-2 text-sm border-2 border-gray-300 rounded-lg focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 outline-none" required>
+                        <option value="">-- Select Type --</option>
+                        {% for option in party_type_options %}
+                        <option value="{{ option.value }}">{{ option.label }}</option>
+                        {% empty %}
+                        <option value="student">👨‍🎓 Student</option>
+                        <option value="teacher">👨‍🏫 Teacher/Staff</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Teacher Fields (hidden by default) -->
+                <div id="teacherFields" style="display:none;">
+                    <div class="bg-purple-50 border border-purple-200 rounded-lg p-3">
+                        <p class="text-xs text-purple-800 mb-2">
+                            <i class="fas fa-info-circle mr-1"></i>
+                            Teacher incidents are handled confidentially by DO and Guidance.
+                        </p>
+                        
+                        <div class="group mb-2">
+                            <label class="block text-xs font-semibold text-gray-700 mb-1">
+                                Teacher Name <span class="text-red-500">*</span>
+                            </label>
+                            <input type="text" name="teacher_name" id="teacherName" 
+                                   class="w-full px-3 py-2 text-sm border-2 border-gray-300 rounded-lg focus:border-purple-500 outline-none"
+                                   placeholder="Enter teacher's full name">
+                        </div>
+                        
+                        <div class="group mb-2">
+                            <label class="block text-xs font-semibold text-gray-700 mb-1">Department/Subject</label>
+                            <input type="text" name="department" 
+                                   class="w-full px-3 py-2 text-sm border-2 border-gray-300 rounded-lg focus:border-purple-500 outline-none"
+                                   placeholder="e.g., Math Department">
+                        </div>
+                        
+                        <label class="flex items-center">
+                            <input type="checkbox" name="is_confidential" checked class="mr-2 h-4 w-4">
+                            <span class="text-xs font-semibold text-gray-800">
+                                <i class="fas fa-lock text-purple-600 mr-1"></i>
+                                Mark as confidential (recommended)
+                            </span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Involved Students -->
+            <div class="mb-3 pb-3 border-b border-gray-200" id="studentFields">
+                <div class="flex items-center space-x-1.5 mb-2">
+                    <div class="bg-teal-100 p-1 rounded-lg">
+                        <i class="fas fa-users text-teal-600 text-xs"></i>
+                    </div>
+                    <h2 class="text-sm font-bold text-gray-900">Involved Students</h2>
+                </div>
+                <div class="group">
+                    <label class="block text-xs font-semibold text-gray-700 mb-0.5">Names or IDs</label>
+                    {{ form.involved_students }}
+                </div>
+            </div>
+
+            <!-- Incident Details -->
+            <div class="mb-3">
+                <div class="flex items-center space-x-1.5 mb-2">
+                    <div class="bg-red-100 p-1 rounded-lg">
+                        <i class="fas fa-exclamation-triangle text-red-600 text-xs"></i>
+                    </div>
+                    <h2 class="text-sm font-bold text-gray-900">Incident Details</h2>
+                </div>
+                <div class="space-y-2">
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-2">
+                        <div class="group">
+                            <label class="block text-xs font-semibold text-gray-700 mb-0.5">Date <span class="text-red-500">*</span></label>
+                            {{ form.incident_date }}
+                        </div>
+                        <div class="group">
+                            <label class="block text-xs font-semibold text-gray-700 mb-0.5">Time <span class="text-red-500">*</span></label>
+                            {{ form.incident_time }}
+                        </div>
+                        <div class="group">
+                            <label class="block text-xs font-semibold text-gray-700 mb-0.5">Incident Type <span class="text-red-500">*</span></label>
+                            <select name="incident_type" id="id_incident_type" class="w-full px-2.5 py-1.5 text-sm border-2 border-gray-200 rounded-xl focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 transition-all outline-none" required>
+                                <option value="">Select Incident Type</option>
+                                <optgroup label="🚫 Prohibited Acts" class="font-bold text-red-700">
+                                    {% for incident_type in incident_types %}
+                                        {% if incident_type.severity == 'prohibited' %}
+                                        <option value="{{ incident_type.id }}">{{ incident_type.name }}</option>
+                                        {% endif %}
+                                    {% endfor %}
+                                </optgroup>
+                                <optgroup label="📋 Other School Policies" class="font-bold text-blue-700">
+                                    {% for incident_type in incident_types %}
+                                        {% if incident_type.severity == 'school_policy' %}
+                                        <option value="{{ incident_type.id }}">{{ incident_type.name }}</option>
+                                        {% endif %}
+                                    {% endfor %}
+                                </optgroup>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Bullying Type (conditional) -->
+                    <div id="bullying-type-div" class="group" style="display: none;">
+                        <label class="block text-xs font-semibold text-gray-700 mb-0.5">
+                            Bullying Type <span class="text-red-500">*</span>
+                        </label>
+                        <select name="bullying_type" id="id_bullying_type" class="w-full px-2.5 py-1.5 text-sm border-2 border-gray-200 rounded-xl focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 transition-all outline-none">
+                            <option value="">Select Bullying Type</option>
+                            <option value="Physical">Physical Bullying</option>
+                            <option value="Psychological">Psychological Bullying</option>
+                            <option value="Sexual">Sexual Bullying</option>
+                            <option value="Emotional">Emotional Bullying</option>
+                            <option value="Cyber">Cyber Bullying</option>
+                            <option value="Social">Social Bullying</option>
+                            <option value="Gender-based">Gender-based Bullying</option>
+                        </select>
+                        <p class="text-xs text-gray-500 mt-0.5">
+                            <i class="fas fa-info-circle mr-1"></i>
+                            Please specify the type of bullying
+                        </p>
+                    </div>
+
+                    <!-- Legal References Display -->
+                    <div id="legal-references"
+                        class="p-2 bg-gradient-to-r from-blue-50 to-indigo-50 border-l-4 border-blue-500 rounded-lg"
+                        style="display: none;">
+                        <div class="flex items-start space-x-1.5">
+                            <i class="fas fa-balance-scale text-blue-600 text-xs mt-0.5"></i>
+                            <div>
+                                <h3 class="font-bold text-blue-900 mb-1 text-xs">Legal References</h3>
+                                <div id="legal-references-content" class="text-xs text-blue-800"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="group">
+                        <label class="block text-xs font-semibold text-gray-700 mb-0.5">Description</label>
+                        {{ form.description }}
+                    </div>
+                    <div class="group">
+                        <label class="block text-xs font-semibold text-gray-700 mb-0.5">Evidence (Optional)</label>
+                        {{ form.evidence }}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Submit Button -->
+            <div class="flex items-center justify-between pt-3 border-t border-gray-200">
+                <p class="text-xs text-gray-600 flex items-center">
+                    <i class="fas fa-lock mr-1 text-emerald-600"></i>
+                    Confidential
+                </p>
+                <button type="submit" id="submit-btn"
+                    class="bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-bold px-5 py-2 rounded-xl shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-200 flex items-center space-x-2 text-sm">
+                    <i class="fas fa-paper-plane" id="submit-icon"></i>
+                    <span id="submit-text">Submit Report</span>
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const curriculumSelect = document.getElementById('id_curriculum');
+        const gradeLevelSelect = document.getElementById('id_grade_level');
+        const sectionNameSelect = document.getElementById('id_section_name');
+        const teacherNameInput = document.getElementById('id_teacher_name');
+        const incidentTypeSelect = document.getElementById('id_incident_type');
+        const legalReferencesDiv = document.getElementById('legal-references');
+        const legalReferencesContent = document.getElementById('legal-references-content');
+
+        // Incident type data with legal references
+        const incidentTypes = {
+        {% for incident_type in incident_types %}
+        '{{ incident_type.id }}': {
+            'name': '{{ incident_type.name|escapejs }}',
+                'legal_references': '{{ incident_type.legal_references|escapejs }}'
+        },
+        {% endfor %}
+    };
+
+    // Show legal references and bullying type when incident type is selected
+    incidentTypeSelect.addEventListener('change', function () {
+        const selectedId = this.value;
+        const bullyingTypeDiv = document.getElementById('bullying-type-div');
+        const bullyingTypeSelect = document.getElementById('id_bullying_type');
+        
+        if (selectedId && incidentTypes[selectedId]) {
+            const incidentName = incidentTypes[selectedId].name.toLowerCase();
+            
+            // Show legal references
+            legalReferencesContent.innerHTML = incidentTypes[selectedId].legal_references;
+            legalReferencesDiv.style.display = 'block';
+            
+            // Show bullying type dropdown if "bullying" is in the incident name
+            if (incidentName.includes('bullying')) {
+                bullyingTypeDiv.style.display = 'block';
+                bullyingTypeSelect.required = true;
+            } else {
+                bullyingTypeDiv.style.display = 'none';
+                bullyingTypeSelect.required = false;
+                bullyingTypeSelect.value = '';
+            }
+        } else {
+            legalReferencesDiv.style.display = 'none';
+            bullyingTypeDiv.style.display = 'none';
+            bullyingTypeSelect.required = false;
+            bullyingTypeSelect.value = '';
+        }
+    });
+
+    // Load section structure and teacher lookup from database (passed as JSON)
+    const curriculumStructure = {{ section_structure_json|safe }} || {};
+    const teacherLookup = {{ teacher_lookup_json|safe }} || {};
+    const availableGrades = {{ available_grades_json|safe }} || {};
+    const userAcademicInfo = {{ user_academic_info_json|safe }};
+
+    // Auto-fill academic info from user account (student or teacher)
+    // Use a more reliable approach that hooks into the existing event system
+    if (userAcademicInfo && userAcademicInfo.curriculum_id) {
+        console.log('Auto-filling academic info:', userAcademicInfo);
+        
+        // Track which fields have been auto-filled to avoid infinite loops
+        let autoFillInProgress = false;
+        let gradeLevelSet = false;
+        let sectionSet = false;
+        
+        // Function to set grade level after curriculum is selected
+        function setGradeLevel() {
+            if (gradeLevelSet || !userAcademicInfo.grade_level || !gradeLevelSelect) return;
+            
+            // Wait for grade options to be populated
+            const checkInterval = setInterval(function() {
+                if (gradeLevelSelect.options.length > 1) {
+                    clearInterval(checkInterval);
+                    
+                    // Find and set the grade level
+                    for (let option of gradeLevelSelect.options) {
+                        if (option.value === userAcademicInfo.grade_level) {
+                            if (gradeLevelSelect.value !== userAcademicInfo.grade_level) {
+                                gradeLevelSelect.value = userAcademicInfo.grade_level;
+                                console.log('✓ Grade level set:', userAcademicInfo.grade_level);
+                                gradeLevelSet = true;
+                                
+                                // Trigger change to populate sections
+                                setTimeout(function() {
+                                    gradeLevelSelect.dispatchEvent(new Event('change', { bubbles: true }));
+                                    setSection(); // Set section after grade change populates sections
+                                }, 100);
+                            }
+                            break;
+                        }
+                    }
+                }
+            }, 100);
+            
+            // Stop checking after 3 seconds
+            setTimeout(() => clearInterval(checkInterval), 3000);
+        }
+        
+        // Function to set section after grade level populates sections
+        function setSection() {
+            if (sectionSet || !userAcademicInfo.section || !sectionNameSelect) return;
+            
+            // Extract section number (e.g., "3" from "3" or "Section 3")
+            const sectionNum = userAcademicInfo.section.replace(/^Section\s*/i, '').replace(/\s*\(.*\)\s*$/, '').trim();
+            console.log('Looking for section:', sectionNum, 'with track:', userAcademicInfo.track_code);
+            
+            // Wait for section options to be populated
+            const checkInterval = setInterval(function() {
+                if (sectionNameSelect.options.length > 1) {
+                    clearInterval(checkInterval);
+                    
+                    // Try to find matching section
+                    for (let option of sectionNameSelect.options) {
+                        if (!option.value) continue;
+                        
+                        const optionText = option.textContent.trim();
+                        const optionValue = option.value;
+                        
+                        // Match: "Section 3 (RBEC)" or similar
+                        let matches = false;
+                        
+                        if (userAcademicInfo.track_code) {
+                            // Match with track code
+                            const pattern1 = `Section ${sectionNum} (${userAcademicInfo.track_code})`;
+                            const pattern2 = `Section ${sectionNum}(${userAcademicInfo.track_code})`;
+                            
+                            if (optionText === pattern1 || optionText === pattern2 ||
+                                (optionText.includes(`Section ${sectionNum}`) && 
+                                 optionText.includes(`(${userAcademicInfo.track_code})`))) {
+                                matches = true;
+                            }
+                        } else {
+                            // Match without track code
+                            if (optionText.includes(`Section ${sectionNum}`) ||
+                                optionText.match(new RegExp(`Section\\s*${sectionNum}\\b`, 'i'))) {
+                                matches = true;
+                            }
+                        }
+                        
+                        if (matches) {
+                            sectionNameSelect.value = optionValue;
+                            console.log('✓ Section set:', optionValue);
+                            sectionSet = true;
+                            
+                            // Trigger section change to set track code
+                            setTimeout(function() {
+                                sectionNameSelect.dispatchEvent(new Event('change', { bubbles: true }));
+                                
+                                // Set track code directly as backup
+                                if (userAcademicInfo.track_code) {
+                                    const trackDisplay = document.getElementById('id_track_display');
+                                    const trackCodeInput = document.getElementById('id_track_code');
+                                    if (trackDisplay) trackDisplay.value = userAcademicInfo.track_code;
+                                    if (trackCodeInput) trackCodeInput.value = userAcademicInfo.track_code;
+                                    console.log('✓ Track code set:', userAcademicInfo.track_code);
+                                }
+                                
+                                // Set teacher name if available
+                                setTimeout(setTeacherName, 200);
+                            }, 100);
+                            break;
+                        }
+                    }
+                    
+                    if (!sectionSet) {
+                        console.log('✗ Section not found. Available options:', 
+                            Array.from(sectionNameSelect.options).map(o => o.textContent));
+                    }
+                }
+            }, 100);
+            
+            // Stop checking after 3 seconds
+            setTimeout(() => clearInterval(checkInterval), 3000);
+        }
+        
+        // Function to set teacher name
+        function setTeacherName() {
+            if (!teacherNameInput || teacherNameInput.value) return;
+            
+            const selectedCurriculum = curriculumSelect.options[curriculumSelect.selectedIndex]?.text;
+            if (!selectedCurriculum || !userAcademicInfo.grade_level || !userAcademicInfo.section) return;
+            
+            const sectionForLookup = userAcademicInfo.section.replace(/^Section\s*/i, '').trim();
+            const lookupKeys = [
+                `${selectedCurriculum}_${userAcademicInfo.grade_level}_${userAcademicInfo.section}_${userAcademicInfo.track_code || ''}`,
+                `${selectedCurriculum}_${userAcademicInfo.grade_level}_Section ${sectionForLookup}_${userAcademicInfo.track_code || ''}`,
+                `${selectedCurriculum}_${userAcademicInfo.grade_level}_${sectionForLookup}_${userAcademicInfo.track_code || ''}`
+            ];
+            
+            for (let key of lookupKeys) {
+                if (teacherLookup[key]) {
+                    teacherNameInput.value = teacherLookup[key];
+                    console.log('✓ Teacher name set:', teacherLookup[key]);
+                    break;
+                }
+            }
+        }
+        
+        // Set curriculum and trigger the chain
+        if (curriculumSelect) {
+            const targetCurriculumId = String(userAcademicInfo.curriculum_id);
+            const currentCurriculumId = curriculumSelect.value;
+            
+            console.log('Current curriculum ID:', currentCurriculumId, 'Target:', targetCurriculumId);
+            
+            // Set curriculum if needed
+            if (currentCurriculumId !== targetCurriculumId) {
+                curriculumSelect.value = targetCurriculumId;
+                console.log('✓ Curriculum set to:', targetCurriculumId);
+            } else {
+                console.log('✓ Curriculum already set to:', targetCurriculumId);
+            }
+            
+            // Always trigger curriculum change to populate grades (even if already set)
+            // This ensures grades are populated even if Django set the initial value
+            setTimeout(function() {
+                if (!autoFillInProgress) {
+                    autoFillInProgress = true;
+                    console.log('Triggering curriculum change event to populate grades...');
+                    
+                    // Trigger the change event
+                    curriculumSelect.dispatchEvent(new Event('change', { bubbles: true }));
+                    
+                    // After curriculum populates grades, set grade level
+                    setTimeout(setGradeLevel, 600);
+                }
+            }, 400);
+        }
+    } else {
+        console.log('No user academic info available for auto-fill');
+    }
+
+    // Fallback section structure if database is empty
+    const fallbackStructure = {
+        'Junior High School': {
+            '7': [
+                {section_name: 'Section 1', track_code: 'STE'}, {section_name: 'Section 2', track_code: 'STE'},
+                {section_name: 'Section 1', track_code: 'SPA'}, {section_name: 'Section 2', track_code: 'SPA'},
+                {section_name: 'Section 1', track_code: 'ICT'}, {section_name: 'Section 2', track_code: 'ICT'},
+                {section_name: 'Section 1', track_code: 'RBEC'}, {section_name: 'Section 2', track_code: 'RBEC'}, {section_name: 'Section 3', track_code: 'RBEC'},
+                {section_name: 'Section 1', track_code: 'STVEP'}, {section_name: 'Section 2', track_code: 'STVEP'}, {section_name: 'Section 3', track_code: 'STVEP'},
+                {section_name: 'Section 4', track_code: 'STVEP'}, {section_name: 'Section 5', track_code: 'STVEP'}, {section_name: 'Section 6', track_code: 'STVEP'},
+                {section_name: 'Section 7', track_code: 'STVEP'}, {section_name: 'Section 8', track_code: 'STVEP'}, {section_name: 'Section 9', track_code: 'STVEP'},
+                {section_name: 'Section 10', track_code: 'STVEP'}
+            ],
+            '8': [
+                {section_name: 'Section 1', track_code: 'STE'}, {section_name: 'Section 2', track_code: 'STE'},
+                {section_name: 'Section 1', track_code: 'SPA'}, {section_name: 'Section 2', track_code: 'SPA'},
+                {section_name: 'Section 1', track_code: 'ICT'}, {section_name: 'Section 2', track_code: 'ICT'},
+                {section_name: 'Section 1', track_code: 'RBEC'}, {section_name: 'Section 2', track_code: 'RBEC'}, {section_name: 'Section 3', track_code: 'RBEC'},
+                {section_name: 'Section 1', track_code: 'STVEP'}, {section_name: 'Section 2', track_code: 'STVEP'}, {section_name: 'Section 3', track_code: 'STVEP'},
+                {section_name: 'Section 4', track_code: 'STVEP'}, {section_name: 'Section 5', track_code: 'STVEP'}, {section_name: 'Section 6', track_code: 'STVEP'},
+                {section_name: 'Section 7', track_code: 'STVEP'}, {section_name: 'Section 8', track_code: 'STVEP'}, {section_name: 'Section 9', track_code: 'STVEP'},
+                {section_name: 'Section 10', track_code: 'STVEP'}
+            ],
+            '9': [
+                {section_name: 'Section 1', track_code: 'STE'}, {section_name: 'Section 2', track_code: 'STE'},
+                {section_name: 'Section 1', track_code: 'SPA'}, {section_name: 'Section 2', track_code: 'SPA'},
+                {section_name: 'Section 1', track_code: 'ICT'}, {section_name: 'Section 2', track_code: 'ICT'},
+                {section_name: 'Section 1', track_code: 'RBEC'}, {section_name: 'Section 2', track_code: 'RBEC'}, {section_name: 'Section 3', track_code: 'RBEC'},
+                {section_name: 'Section 1', track_code: 'STVEP'}, {section_name: 'Section 2', track_code: 'STVEP'}, {section_name: 'Section 3', track_code: 'STVEP'},
+                {section_name: 'Section 4', track_code: 'STVEP'}, {section_name: 'Section 5', track_code: 'STVEP'}, {section_name: 'Section 6', track_code: 'STVEP'},
+                {section_name: 'Section 7', track_code: 'STVEP'}, {section_name: 'Section 8', track_code: 'STVEP'}, {section_name: 'Section 9', track_code: 'STVEP'},
+                {section_name: 'Section 10', track_code: 'STVEP'}
+            ],
+            '10': [
+                {section_name: 'Section 1', track_code: 'STE'}, {section_name: 'Section 2', track_code: 'STE'},
+                {section_name: 'Section 1', track_code: 'SPA'}, {section_name: 'Section 2', track_code: 'SPA'},
+                {section_name: 'Section 1', track_code: 'ICT'}, {section_name: 'Section 2', track_code: 'ICT'},
+                {section_name: 'Section 1', track_code: 'RBEC'}, {section_name: 'Section 2', track_code: 'RBEC'}, {section_name: 'Section 3', track_code: 'RBEC'},
+                {section_name: 'Section 1', track_code: 'STVEP'}, {section_name: 'Section 2', track_code: 'STVEP'}, {section_name: 'Section 3', track_code: 'STVEP'},
+                {section_name: 'Section 4', track_code: 'STVEP'}, {section_name: 'Section 5', track_code: 'STVEP'}, {section_name: 'Section 6', track_code: 'STVEP'},
+                {section_name: 'Section 7', track_code: 'STVEP'}, {section_name: 'Section 8', track_code: 'STVEP'}, {section_name: 'Section 9', track_code: 'STVEP'},
+                {section_name: 'Section 10', track_code: 'STVEP'}
+            ]
+        },
+        'Senior High School': {
+            '11': [
+                {section_name: 'Section 1', track_code: 'STEM'},
+                {section_name: 'Section 1', track_code: 'Arts & Design'},
+                {section_name: 'Section 1', track_code: 'TVL – ICT'},
+                {section_name: 'Section 1', track_code: 'TVL – SMAW'},
+                {section_name: 'Section 1', track_code: 'TVL – EIM'},
+                {section_name: 'Section 1', track_code: 'TVL – Dressmaking'},
+                {section_name: 'Section 1', track_code: 'TVL – FBS'},
+                {section_name: 'Section 1', track_code: 'TVL – Bread & Pastry'},
+                {section_name: 'Section 1', track_code: 'TVL – CSS'}
+            ],
+            '12': [
+                {section_name: 'Section 1', track_code: 'STEM'},
+                {section_name: 'Section 1', track_code: 'Arts & Design'},
+                {section_name: 'Section 1', track_code: 'TVL – ICT'},
+                {section_name: 'Section 1', track_code: 'TVL – SMAW'},
+                {section_name: 'Section 1', track_code: 'TVL – EIM'},
+                {section_name: 'Section 1', track_code: 'TVL – Dressmaking'},
+                {section_name: 'Section 1', track_code: 'TVL – FBS'},
+                {section_name: 'Section 1', track_code: 'TVL – Bread & Pastry'},
+                {section_name: 'Section 1', track_code: 'TVL – CSS'}
+            ]
+        }
+    };
+
+    // Initialize dropdowns - preserve existing values if any
+    const existingGradeLevel = gradeLevelSelect.value;
+    const existingSection = sectionNameSelect.value;
+    gradeLevelSelect.innerHTML = '<option value="">Select Grade Level</option>';
+    sectionNameSelect.innerHTML = '<option value="">Select Section</option>';
+    
+    // Restore existing values if they were set
+    if (existingGradeLevel) {
+        gradeLevelSelect.value = existingGradeLevel;
+    }
+    if (existingSection) {
+        sectionNameSelect.value = existingSection;
+    }
+
+    // Update grade levels when curriculum is selected - only show grades with assignments
+    curriculumSelect.addEventListener('change', function () {
+        const selectedCurriculum = this.options[this.selectedIndex].text;
+        gradeLevelSelect.innerHTML = '<option value="">Select Grade Level</option>';
+        sectionNameSelect.innerHTML = '<option value="">Select Section</option>';
+        trackDisplayInput.value = '';
+        teacherNameInput.value = '';
+
+        // Get available grades from teacher assignments for this curriculum
+        if (availableGrades[selectedCurriculum] && availableGrades[selectedCurriculum].length > 0) {
+            availableGrades[selectedCurriculum].forEach(grade => {
+                const option = document.createElement('option');
+                option.value = grade;
+                option.text = `Grade ${grade}`;
+                gradeLevelSelect.appendChild(option);
+            });
+        } else {
+            // Fallback to default if no assignments found
+            if (selectedCurriculum === 'Junior High School') {
+                ['7', '8', '9', '10'].forEach(grade => {
+                    const option = document.createElement('option');
+                    option.value = grade;
+                    option.text = `Grade ${grade}`;
+                    gradeLevelSelect.appendChild(option);
+                });
+            } else if (selectedCurriculum === 'Senior High School') {
+                ['11', '12'].forEach(grade => {
+                    const option = document.createElement('option');
+                    option.value = grade;
+                    option.text = `Grade ${grade}`;
+                    gradeLevelSelect.appendChild(option);
+                });
+            }
+        }
+    });
+
+    // Update sections when grade level is selected
+    gradeLevelSelect.addEventListener('change', function () {
+        const selectedCurriculum = curriculumSelect.options[curriculumSelect.selectedIndex].text;
+        const selectedGrade = this.value;
+
+        sectionNameSelect.innerHTML = '<option value="">Select Section</option>';
+        teacherNameInput.value = '';
+
+        if (selectedCurriculum && selectedGrade) {
+            // Try to get sections from database first, fallback to default structure
+            let sections = null;
+            if (curriculumStructure[selectedCurriculum] && curriculumStructure[selectedCurriculum][selectedGrade]) {
+                sections = curriculumStructure[selectedCurriculum][selectedGrade];
+            } else if (fallbackStructure[selectedCurriculum] && fallbackStructure[selectedCurriculum][selectedGrade]) {
+                sections = fallbackStructure[selectedCurriculum][selectedGrade];
+            }
+
+            if (sections && sections.length > 0) {
+                sections.forEach(sectionData => {
+                    const option = document.createElement('option');
+                    // For JHS: "Section 1 (STE)", for SHS: strand name (e.g., "STEM", "TVL – SMAW")
+                    if (selectedCurriculum === 'Junior High School') {
+                        // JHS: Save as "Section X (TRACK)"
+                        option.value = `${sectionData.section_name} (${sectionData.track_code})`;
+                        option.text = `${sectionData.section_name} (${sectionData.track_code})`;
+                        option.dataset.trackCode = sectionData.track_code;
+                        option.dataset.sectionName = sectionData.section_name;
+                    } else {
+                        // Senior High - section IS the strand, so save the track_code as section_name
+                        option.value = sectionData.track_code;  // Save strand as section_name
+                        option.text = sectionData.track_code;   // Display strand
+                        option.dataset.trackCode = sectionData.track_code;
+                        option.dataset.sectionName = sectionData.section_name || sectionData.track_code;  // For SHS, section_name = strand
+                    }
+                    sectionNameSelect.appendChild(option);
+                });
+            }
+        }
+    });
+
+    // Track display field
+    const trackDisplayInput = document.getElementById('id_track_display');
+    
+    // Update teacher and track when section is selected
+    sectionNameSelect.addEventListener('change', function () {
+        const selectedCurriculum = curriculumSelect.options[curriculumSelect.selectedIndex].text;
+        const gradeLevel = gradeLevelSelect.value;
+        const selectedOption = this.options[this.selectedIndex];
+        const sectionName = selectedOption.dataset.sectionName;
+        const trackCode = selectedOption.dataset.trackCode;
+
+        if (gradeLevel && sectionName && trackCode) {
+            // Update track display and hidden field
+            if (trackCode) {
+                trackDisplayInput.value = trackCode;
+                document.getElementById('id_track_code').value = trackCode;
+            } else {
+                trackDisplayInput.value = '';
+                document.getElementById('id_track_code').value = '';
+            }
+            
+            // Build lookup key: curriculum_grade_section_track
+            // For SHS, sectionName might be the strand itself, so use it directly
+            let lookupKey;
+            if (selectedCurriculum === 'Senior High School') {
+                // For SHS, section_name in DB might be "Section 1" but we're using strand
+                // Try both: with "Section 1" and with strand as section_name
+                lookupKey = `${selectedCurriculum}_${gradeLevel}_Section 1_${trackCode}`;
+                if (!teacherLookup[lookupKey]) {
+                    // Try with strand as section_name
+                    lookupKey = `${selectedCurriculum}_${gradeLevel}_${trackCode}_${trackCode}`;
+                }
+            } else {
+                lookupKey = `${selectedCurriculum}_${gradeLevel}_${sectionName}_${trackCode}`;
+            }
+            
+            // Check if teacher exists for this combination
+            const teacherName = teacherLookup[lookupKey];
+            if (teacherName) {
+                teacherNameInput.value = teacherName;
+            } else {
+                teacherNameInput.value = 'Teacher not assigned';
+            }
+        } else {
+            // Clear track and teacher if section is not selected
+            trackDisplayInput.value = '';
+            document.getElementById('id_track_code').value = '';
+            teacherNameInput.value = '';
+        }
+    });
+    
+    // Clear track when curriculum or grade changes
+    curriculumSelect.addEventListener('change', function() {
+        trackDisplayInput.value = '';
+        document.getElementById('id_track_code').value = '';
+        teacherNameInput.value = '';
+    });
+    
+    gradeLevelSelect.addEventListener('change', function() {
+        trackDisplayInput.value = '';
+        document.getElementById('id_track_code').value = '';
+        teacherNameInput.value = '';
+    });
+});
+
+// Toggle between student and teacher fields based on party type
+document.addEventListener('DOMContentLoaded', function() {
+    const partyType = document.getElementById('partyType');
+    const studentFields = document.getElementById('studentFields');
+    const teacherFields = document.getElementById('teacherFields');
+    const teacherName = document.getElementById('teacherName');
+    
+    if (partyType) {
+        partyType.addEventListener('change', function() {
+            if (this.value === 'student') {
+                if(studentFields) studentFields.style.display = 'block';
+                if(teacherFields) teacherFields.style.display = 'none';
+                if(teacherName) teacherName.removeAttribute('required');
+            } else if (this.value === 'teacher') {
+                if(studentFields) studentFields.style.display = 'none';
+                if(teacherFields) teacherFields.style.display = 'block';
+                if(teacherName) teacherName.setAttribute('required', 'required');
+            } else {
+                if(studentFields) studentFields.style.display = 'none';
+                if(teacherFields) teacherFields.style.display = 'none';
+            }
+        });
+    }
+});
+
+// Auto-fill academic information for students and teachers
+document.addEventListener('DOMContentLoaded', function() {
+    {% if user.role == 'student' or user.role == 'teacher' %}
+    const curriculumSelect = document.getElementById('id_curriculum');
+    const gradeLevelSelect = document.getElementById('id_grade_level');
+    const sectionNameSelect = document.getElementById('id_section_name');
+    const trackDisplayInput = document.getElementById('id_track_display');
+    const trackCodeInput = document.getElementById('id_track_code');
+    const teacherNameInput = document.getElementById('id_teacher_name');
+    
+    {% if user.curriculum %}
+    const curriculumId = '{{ user.curriculum.id }}';
+    const curriculumName = '{{ user.curriculum.name|escapejs }}';
+    const gradeLevel = '{{ user.grade_level|default:"" }}';
+    const sectionValue = '{{ user.section|default:"" }}';
+    const trackCode = '{{ user.track_code|default:"" }}';
+    
+    // Function to set curriculum and wait for it to populate
+    function setCurriculum() {
+        if (!curriculumSelect) return false;
+        
+        // Wait for curriculum options to be available
+        if (curriculumSelect.options.length <= 1) {
+            setTimeout(setCurriculum, 100);
+            return false;
+        }
+        
+        // Try to set by ID first, then by name
+        let found = false;
+        for (let option of curriculumSelect.options) {
+            if (option.value === curriculumId || option.text.trim() === curriculumName.trim()) {
+                curriculumSelect.value = option.value;
+                found = true;
+                break;
+            }
+        }
+        
+        if (!found) {
+            // Retry if not found (dropdown might still be loading)
+            setTimeout(setCurriculum, 200);
+            return false;
+        }
+        
+        // Trigger change to populate grade levels
+        curriculumSelect.dispatchEvent(new Event('change', { bubbles: true }));
+        
+        // Wait a bit then set grade level
+        if (gradeLevel) {
+            setTimeout(setGradeLevel, 1000);
+        }
+        
+        return true;
+    }
+    
+    // Function to set grade level and wait for sections to populate
+    function setGradeLevel() {
+        if (!gradeLevelSelect) return false;
+        
+        // Wait for grade options to be available
+        if (gradeLevelSelect.options.length <= 1) {
+            setTimeout(setGradeLevel, 100);
+            return false;
+        }
+        
+        // Set grade level value - verify it exists first
+        let gradeFound = false;
+        for (let option of gradeLevelSelect.options) {
+            if (option.value === gradeLevel) {
+                gradeLevelSelect.value = gradeLevel;
+                gradeFound = true;
+                break;
+            }
+        }
+        
+        if (!gradeFound) {
+            // Retry if grade not found yet
+            setTimeout(setGradeLevel, 200);
+            return false;
+        }
+        
+        // Trigger change to populate sections
+        gradeLevelSelect.dispatchEvent(new Event('change', { bubbles: true }));
+        
+        // Wait longer to ensure sections are populated (increase delay for reliability)
+        if (sectionValue) {
+            setTimeout(setSection, 1500);
+        }
+        
+        return true;
+    }
+    
+    // Function to set section - Enhanced to reliably match from teacher account data
+    function setSection() {
+        if (!sectionNameSelect) return false;
+        
+        // Wait for section options to be available (need at least 2 options: empty + one section)
+        if (sectionNameSelect.options.length <= 1) {
+            if (!setSection.waitCount) setSection.waitCount = 0;
+            setSection.waitCount++;
+            if (setSection.waitCount < 30) { // Wait up to 3 seconds for options to load
+                setTimeout(setSection, 100);
+            }
+            return false;
+        }
+        setSection.waitCount = 0; // Reset wait count when options are available
+        
+        // Extract section number from user's section value (from teacher account)
+        // Handle formats: "1", "Section 1", "Section 1 (STEM)", etc.
+        const sectionNum = sectionValue.replace(/[^0-9]/g, ''); // Extract just the number
+        const sectionLower = sectionValue.toLowerCase().trim();
+        const trackCodeLower = trackCode ? trackCode.toLowerCase().trim() : '';
+        
+        // Normalize section value: remove "Section" prefix if present
+        const normalizedSection = sectionLower.replace(/^section\s*/i, '').trim();
+        
+        let found = false;
+        for (let option of sectionNameSelect.options) {
+            if (!option.value) continue; // Skip empty option
+            
+            const optionText = option.text.toLowerCase();
+            const optionValue = option.value.toLowerCase();
+            
+            // Check dataset attributes first (most reliable - these are set when options are created)
+            const optionSectionName = option.dataset.sectionName ? option.dataset.sectionName.toLowerCase().trim() : '';
+            const optionTrackCode = option.dataset.trackCode ? option.dataset.trackCode.toLowerCase().trim() : '';
+            
+            // Section matching strategies (in order of reliability):
+            let matchesSection = false;
+            
+            // 1. Check dataset.sectionName if available (most reliable)
+            if (optionSectionName) {
+                const optionSectionNum = optionSectionName.replace(/[^0-9]/g, '');
+                if (sectionNum && optionSectionNum === sectionNum) {
+                    matchesSection = true;
+                } else if (optionSectionName.includes(normalizedSection) || 
+                          normalizedSection.includes(optionSectionNum) ||
+                          optionSectionName === sectionLower ||
+                          optionSectionName.includes(sectionLower)) {
+                    matchesSection = true;
+                }
+            }
+            
+            // 2. Match by section number in option text/value
+            if (!matchesSection && sectionNum) {
+                // Match patterns like "section 1", "section1", or standalone "1"
+                const numPattern = new RegExp('\\b' + sectionNum + '\\b');
+                matchesSection = numPattern.test(optionText) || 
+                                numPattern.test(optionValue) ||
+                                optionText.includes('section ' + sectionNum) || 
+                                optionText.includes('section' + sectionNum) ||
+                                optionValue.includes('section ' + sectionNum) ||
+                                optionValue.includes('section' + sectionNum);
+            }
+            
+            // 3. Try exact or partial match with full section value
+            if (!matchesSection && sectionLower) {
+                matchesSection = optionText.includes(sectionLower) || 
+                                optionValue.includes(sectionLower) ||
+                                optionText.includes(normalizedSection) ||
+                                optionValue.includes(normalizedSection);
+            }
+            
+            // Track matching: if track code exists, it should match; if not, any track is fine
+            let matchesTrack = true; // Default to true if no track code
+            if (trackCodeLower) {
+                // Check dataset.trackCode first (most reliable)
+                if (optionTrackCode && optionTrackCode === trackCodeLower) {
+                    matchesTrack = true;
+                } else {
+                    // Check in option text/value
+                    matchesTrack = optionText.includes(trackCodeLower) || 
+                                  optionValue.includes(trackCodeLower) ||
+                                  optionText.includes('(' + trackCodeLower + ')') ||
+                                  optionValue.includes('(' + trackCodeLower + ')');
+                }
+            }
+            
+            if (matchesSection && matchesTrack) {
+                sectionNameSelect.value = option.value;
+                // Trigger change event to load track and teacher
+                sectionNameSelect.dispatchEvent(new Event('change', { bubbles: true }));
+                found = true;
+                break;
+            }
+        }
+        
+        // If not found, try again after a delay (sections might still be loading)
+        if (!found) {
+            // Track attempts to avoid infinite loops
+            if (!setSection.attempts) setSection.attempts = 0;
+            setSection.attempts++;
+            if (setSection.attempts < 20 && sectionNameSelect.options.length > 1) {
+                setTimeout(setSection, 200);
+            }
+        } else {
+            setSection.attempts = 0; // Reset on success
+        }
+        
+        // Always set track code manually from teacher account (even if section not found)
+        if (trackCode && trackCodeInput && trackDisplayInput) {
+            trackCodeInput.value = trackCode;
+            trackDisplayInput.value = trackCode;
+        }
+        
+        // Always set teacher name for teachers from their account
+        {% if user.role == 'teacher' %}
+        if (teacherNameInput) {
+            teacherNameInput.value = '{{ user.get_full_name|escapejs }}';
+        }
+        {% endif %}
+        
+        return found;
+    }
+    
+    // Start the auto-fill process - ensure it runs after DOM is fully ready
+    // Use longer initial delay to ensure all dropdowns are initialized
+    setTimeout(function() {
+        if (curriculumId || curriculumName) {
+            setCurriculum();
+        }
+    }, 500);
+    {% endif %}
+    {% endif %}
+});
+
+// Prevent double submission
+const form = document.getElementById('incident-form');
+const submitBtn = document.getElementById('submit-btn');
+const submitIcon = document.getElementById('submit-icon');
+const submitText = document.getElementById('submit-text');
+let isSubmitting = false;
+
+form.addEventListener('submit', function(e) {
+    if (isSubmitting) {
+        e.preventDefault();
+        return false;
+    }
+    
+    isSubmitting = true;
+    submitBtn.disabled = true;
+    submitBtn.classList.add('opacity-50', 'cursor-not-allowed');
+    submitBtn.classList.remove('hover:from-emerald-700', 'hover:to-teal-700', 'hover:shadow-xl', 'hover:-translate-y-0.5');
+    submitIcon.className = 'fas fa-spinner fa-spin';
+    submitText.textContent = 'Submitting...';
+});
+</script>
+{% endblock %}

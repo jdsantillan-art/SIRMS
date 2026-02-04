@@ -1,0 +1,686 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Account Settings - SIRMS</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #ffffff;
+            min-height: 100vh;
+            overflow-x: hidden;
+            position: relative;
+        }
+        
+        /* Subtle Background Pattern */
+        body::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: 
+                radial-gradient(circle at 20% 80%, rgba(46, 139, 87, 0.05) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(34, 139, 34, 0.05) 0%, transparent 50%),
+                radial-gradient(circle at 40% 40%, rgba(144, 238, 144, 0.05) 0%, transparent 50%);
+            animation: backgroundShift 20s ease-in-out infinite;
+        }
+        
+        @keyframes backgroundShift {
+            0%, 100% { transform: translateX(0) translateY(0); }
+            25% { transform: translateX(-20px) translateY(-20px); }
+            50% { transform: translateX(20px) translateY(-10px); }
+            75% { transform: translateX(-10px) translateY(20px); }
+        }
+        
+        .container {
+            position: relative;
+            z-index: 1;
+            padding: 20px;
+            max-width: 1400px;
+            margin: 0 auto;
+            height: 100vh;
+            overflow-y: auto;
+        }
+        
+        /* Close Button */
+        .close-button {
+            position: fixed;
+            top: 15px;
+            right: 15px;
+            background: #2E8B57;
+            border: none;
+            color: white;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            font-size: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            z-index: 10;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 12px rgba(46, 139, 87, 0.3);
+        }
+        
+        .close-button:hover {
+            background: #228B22;
+            transform: scale(1.1);
+            box-shadow: 0 6px 20px rgba(46, 139, 87, 0.4);
+        }
+        
+        /* Compact Premium Header */
+        .premium-header {
+            background: rgba(46, 139, 87, 0.05);
+            border: 2px solid rgba(46, 139, 87, 0.1);
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 
+                0 4px 16px rgba(46, 139, 87, 0.1),
+                inset 0 1px 0 rgba(46, 139, 87, 0.05);
+            animation: fadeInUp 0.8s ease-out;
+        }
+        
+        .profile-section {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+        
+        .premium-avatar {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #2E8B57 0%, #228B22 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 32px;
+            font-weight: 800;
+            color: white;
+            box-shadow: 
+                0 8px 20px rgba(0, 0, 0, 0.2),
+                0 0 0 3px rgba(255, 255, 255, 0.1);
+            transition: all 0.4s ease;
+        }
+        
+        .premium-avatar:hover {
+            transform: scale(1.05);
+            box-shadow: 
+                0 12px 30px rgba(0, 0, 0, 0.3),
+                0 0 0 3px rgba(255, 255, 255, 0.2);
+        }
+        
+        .profile-info h1 {
+            margin: 0;
+            font-size: 28px;
+            font-weight: 800;
+            color: #2E8B57;
+            text-shadow: 0 2px 4px rgba(46, 139, 87, 0.1);
+        }
+        
+        .profile-info p {
+            margin: 8px 0 0 0;
+            font-size: 14px;
+            color: #666666;
+            font-weight: 500;
+        }
+        
+        /* Content Grid */
+        .premium-grid {
+            display: grid;
+            grid-template-columns: 1fr 350px;
+            gap: 20px;
+            height: calc(100vh - 200px);
+        }
+        
+        /* Premium Cards */
+        .premium-card {
+            background: #ffffff;
+            border: 2px solid rgba(46, 139, 87, 0.1);
+            border-radius: 16px;
+            overflow: hidden;
+            margin-bottom: 15px;
+            transition: all 0.4s ease;
+            box-shadow: 
+                0 4px 16px rgba(46, 139, 87, 0.1),
+                inset 0 1px 0 rgba(46, 139, 87, 0.05);
+            animation: fadeInUp 0.8s ease-out;
+        }
+        
+        .premium-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 
+                0 8px 30px rgba(46, 139, 87, 0.15),
+                inset 0 1px 0 rgba(46, 139, 87, 0.1);
+            border-color: rgba(46, 139, 87, 0.2);
+        }
+        
+        .card-header {
+            background: rgba(46, 139, 87, 0.05);
+            padding: 15px 20px;
+            border-bottom: 1px solid rgba(46, 139, 87, 0.1);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .card-header i {
+            color: white;
+            font-size: 18px;
+            padding: 8px;
+            background: linear-gradient(135deg, #2E8B57 0%, #228B22 100%);
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+        }
+        
+        .card-header h3 {
+            margin: 0;
+            font-size: 18px;
+            font-weight: 800;
+            color: #2E8B57;
+        }
+        
+        .card-body {
+            padding: 20px;
+        }
+        
+        /* Form Styles */
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        .form-label {
+            display: block;
+            font-size: 12px;
+            font-weight: 700;
+            color: #2E8B57;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            opacity: 0.9;
+        }
+        
+        .premium-input {
+            width: 100%;
+            border: 2px solid rgba(46, 139, 87, 0.2);
+            border-radius: 12px;
+            padding: 12px 16px;
+            font-size: 14px;
+            font-weight: 500;
+            color: #2E8B57;
+            background: #ffffff;
+            transition: all 0.3s ease;
+            box-sizing: border-box;
+        }
+        
+        .premium-input::placeholder {
+            color: rgba(46, 139, 87, 0.6);
+        }
+        
+        .premium-input:focus {
+            outline: none;
+            border-color: #2E8B57;
+            background: #ffffff;
+            box-shadow: 
+                0 0 0 3px rgba(46, 139, 87, 0.1),
+                0 4px 16px rgba(46, 139, 87, 0.1);
+            transform: translateY(-1px);
+        }
+        
+        /* Password Input with Eye Button */
+        .password-input-container {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+        
+        .password-input-container .premium-input {
+            padding-right: 50px;
+        }
+        
+        .password-toggle {
+            position: absolute;
+            right: 15px;
+            background: none;
+            border: none;
+            color: #2E8B57;
+            cursor: pointer;
+            font-size: 16px;
+            padding: 5px;
+            border-radius: 4px;
+            transition: all 0.3s ease;
+            z-index: 2;
+        }
+        
+        .password-toggle:hover {
+            background: rgba(46, 139, 87, 0.1);
+            color: #228B22;
+            transform: scale(1.1);
+        }
+        
+        .password-toggle:active {
+            transform: scale(0.95);
+        }
+        
+        /* Premium Buttons */
+        .btn-premium {
+            background: linear-gradient(135deg, #2E8B57 0%, #228B22 100%);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            padding: 14px 24px;
+            font-size: 14px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            width: 100%;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            box-shadow: 
+                0 4px 12px rgba(46, 139, 87, 0.3),
+                inset 0 1px 0 rgba(255, 255, 255, 0.2);
+        }
+        
+        .btn-premium:hover {
+            transform: translateY(-2px);
+            box-shadow: 
+                0 6px 18px rgba(46, 139, 87, 0.4),
+                inset 0 1px 0 rgba(255, 255, 255, 0.3);
+        }
+        
+        .btn-secondary {
+            background: #ffffff;
+            color: #2E8B57;
+            border: 2px solid #2E8B57;
+            border-radius: 12px;
+            padding: 12px 24px;
+            font-size: 14px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            width: 100%;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .btn-secondary:hover {
+            background: #2E8B57;
+            color: #ffffff;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(46, 139, 87, 0.2);
+        }
+        
+        /* Info Items */
+        .info-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid rgba(46, 139, 87, 0.1);
+        }
+        
+        .info-item:last-child {
+            border-bottom: none;
+        }
+        
+        .info-label {
+            font-weight: 700;
+            color: #666666;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .info-value {
+            font-weight: 600;
+            color: #2E8B57;
+            font-size: 13px;
+        }
+        
+        /* Badges */
+        .badge {
+            padding: 6px 12px;
+            border-radius: 16px;
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .badge-premium {
+            background: linear-gradient(135deg, #2E8B57 0%, #228B22 100%);
+            color: white;
+            box-shadow: 0 4px 12px rgba(46, 139, 87, 0.3);
+        }
+        
+        .badge-success {
+            background: linear-gradient(135deg, #32CD32 0%, #228B22 100%);
+            color: white;
+        }
+        
+        .badge-warning {
+            background: linear-gradient(135deg, #ffc107 0%, #ff8f00 100%);
+            color: white;
+        }
+        
+        /* Animations */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(40px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            .premium-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+            
+            .profile-section {
+                flex-direction: column;
+                text-align: center;
+            }
+            
+            .premium-avatar {
+                width: 100px;
+                height: 100px;
+                font-size: 36px;
+            }
+            
+            .profile-info h1 {
+                font-size: 28px;
+            }
+        }
+        
+        /* Messages */
+        .messages {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+        }
+        
+        .alert {
+            padding: 15px 20px;
+            border-radius: 12px;
+            margin-bottom: 10px;
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            font-weight: 600;
+        }
+        
+        .alert-success {
+            background: rgba(50, 205, 50, 0.2);
+            border-color: rgba(50, 205, 50, 0.3);
+        }
+        
+        .alert-error {
+            background: rgba(239, 68, 68, 0.2);
+            border-color: rgba(239, 68, 68, 0.3);
+        }
+    </style>
+</head>
+<body>
+    <!-- Messages -->
+    {% if messages %}
+    <div class="messages">
+        {% for message in messages %}
+        <div class="alert alert-{{ message.tags }}">
+            {{ message }}
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- Close Button -->
+    <button class="close-button" onclick="window.location.href='/dashboard/'" title="Return to Dashboard">
+        <i class="fas fa-times"></i>
+    </button>
+    
+    <div class="container">
+        <!-- Premium Header -->
+        <div class="premium-header">
+            <div class="profile-section">
+                <div class="premium-avatar">
+                    {{ user.first_name.0|default:"U" }}{{ user.last_name.0|default:"" }}
+                </div>
+                <div class="profile-info">
+                    <h1>{% if user.get_full_name_with_middle %}{{ user.get_full_name_with_middle }}{% else %}{{ user.get_full_name|default:"Account Settings" }}{% endif %}</h1>
+                    <p>Manage your account information and security preferences</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="premium-grid">
+            <!-- Main Content -->
+            <div>
+                <!-- Password Reset Required Alert -->
+                {% if user.must_change_password %}
+                <div class="premium-card" style="border: 3px solid #dc2626; background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%); margin-bottom: 15px;">
+                    <div class="card-header" style="background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%); color: white; border-bottom: none;">
+                        <i class="fas fa-exclamation-triangle" style="background: rgba(255, 255, 255, 0.2); color: #fef2f2;"></i>
+                        <h3 style="color: #fef2f2; font-weight: 900; font-size: 18px;">Password Reset Required</h3>
+                    </div>
+                    <div class="card-body" style="background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%); padding: 15px;">
+                        <div style="display: flex; align-items: center; gap: 15px; padding: 15px; background: rgba(220, 38, 38, 0.1); border-radius: 12px; border: 2px solid rgba(220, 38, 38, 0.2);">
+                            <div style="font-size: 32px; color: #dc2626;">
+                                <i class="fas fa-shield-alt"></i>
+                            </div>
+                            <div>
+                                <h4 style="color: #991b1b; font-size: 16px; font-weight: 800; margin: 0 0 4px 0;">Security Notice</h4>
+                                <p style="color: #7f1d1d; font-size: 14px; font-weight: 600; margin: 0; line-height: 1.4;">
+                                    <strong>Password Reset Required.</strong> For security reasons, you must reset your password before continuing.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+                
+                <!-- Security Settings -->
+                <div class="premium-card">
+                    <div class="card-header">
+                        <i class="fas fa-shield-alt"></i>
+                        <h3>Security Settings</h3>
+                    </div>
+                    <div class="card-body">
+                        <form method="post">
+                            {% csrf_token %}
+                            <input type="hidden" name="form_type" value="password">
+                            
+                            <div class="form-group">
+                                <label class="form-label">Current Password</label>
+                                <div class="password-input-container">
+                                    <input type="password" name="old_password" id="old_password" required class="premium-input" placeholder="Enter your current password">
+                                    <button type="button" class="password-toggle" onclick="togglePassword('old_password', this)">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label">New Password</label>
+                                    <div class="password-input-container">
+                                        <input type="password" name="new_password1" id="new_password1" required minlength="8" class="premium-input" placeholder="Create a strong password">
+                                        <button type="button" class="password-toggle" onclick="togglePassword('new_password1', this)">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label class="form-label">Confirm Password</label>
+                                    <div class="password-input-container">
+                                        <input type="password" name="new_password2" id="new_password2" required minlength="8" class="premium-input" placeholder="Confirm your new password">
+                                        <button type="button" class="password-toggle" onclick="togglePassword('new_password2', this)">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <button type="submit" class="btn-premium">
+                                <i class="fas fa-shield-alt" style="margin-right: 8px;"></i>Update Password
+                            </button>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Personal Information -->
+                <div class="premium-card">
+                    <div class="card-header">
+                        <i class="fas fa-user"></i>
+                        <h3>Personal Information</h3>
+                    </div>
+                    <div class="card-body">
+                        <form method="post">
+                            {% csrf_token %}
+                            <input type="hidden" name="form_type" value="profile">
+                            
+                            <div class="form-group">
+                                <label class="form-label">Username</label>
+                                <input type="text" name="username" value="{{ user.username }}" class="premium-input" placeholder="Enter username">
+                            </div>
+                            
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label">First Name</label>
+                                    <input type="text" name="first_name" value="{{ user.first_name }}" class="premium-input" placeholder="Enter first name">
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label class="form-label">Last Name</label>
+                                    <input type="text" name="last_name" value="{{ user.last_name }}" class="premium-input" placeholder="Enter last name">
+                                </div>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label class="form-label">Email Address</label>
+                                <input type="email" name="email" value="{{ user.email }}" class="premium-input" placeholder="Enter email address">
+                            </div>
+                            
+                            <button type="submit" class="btn-secondary">
+                                <i class="fas fa-save" style="margin-right: 8px;"></i>Save Changes
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sidebar -->
+            <div>
+                <!-- Account Summary -->
+                <div class="premium-card">
+                    <div class="card-header">
+                        <i class="fas fa-id-card"></i>
+                        <h3>Account Summary</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="info-item">
+                            <span class="info-label">Username</span>
+                            <span class="info-value">{{ user.username }}</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Role</span>
+                            <span class="badge badge-premium">{{ user.get_role_display }}</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Status</span>
+                            <span class="badge {% if user.is_active %}badge-success{% else %}badge-warning{% endif %}">
+                                {% if user.is_active %}Active{% else %}Inactive{% endif %}
+                            </span>
+                        </div>
+                        {% if user.last_login %}
+                        <div class="info-item">
+                            <span class="info-label">Last Login</span>
+                            <span class="info-value">{{ user.last_login|date:"M d, Y H:i" }}</span>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Password toggle functionality
+        function togglePassword(inputId, button) {
+            const input = document.getElementById(inputId);
+            const icon = button.querySelector('i');
+            
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.classList.remove('fa-eye');
+                icon.classList.add('fa-eye-slash');
+            } else {
+                input.type = 'password';
+                icon.classList.remove('fa-eye-slash');
+                icon.classList.add('fa-eye');
+            }
+        }
+        
+        // Auto-hide messages after 5 seconds
+        setTimeout(function() {
+            const messages = document.querySelector('.messages');
+            if (messages) {
+                messages.style.opacity = '0';
+                messages.style.transform = 'translateX(100%)';
+                setTimeout(() => messages.remove(), 300);
+            }
+        }, 5000);
+        
+        // Add form validation
+        document.querySelectorAll('form').forEach(form => {
+            form.addEventListener('submit', function(e) {
+                const passwordFields = form.querySelectorAll('input[type="password"], input[type="text"][name*="password"]');
+                if (passwordFields.length === 3) {
+                    const newPass1 = passwordFields[1].value;
+                    const newPass2 = passwordFields[2].value;
+                    
+                    if (newPass1 !== newPass2) {
+                        e.preventDefault();
+                        alert('New passwords do not match!');
+                        return false;
+                    }
+                    
+                    if (newPass1.length < 8) {
+                        e.preventDefault();
+                        alert('Password must be at least 8 characters long!');
+                        return false;
+                    }
+                }
+            });
+        });
+    </script>
+</body>
+</html>
